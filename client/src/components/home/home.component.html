@@ -1,0 +1,75 @@
+<main class="main">
+  <section id="home" class="section section--hero">
+    <div class="hero__grid">
+      <div>
+        <div class="hero__badge" data-reveal>
+          <span class="hero__dot"></span>Based in Mallorca · building compilers &amp; systems
+        </div>
+        <h1 class="hero__title">Jordi<br>Xavier<span class="hero__accent">.</span></h1>
+        <p class="hero__lead">
+          Full-stack developer. Por el día construyo sistemas internos y APIs; de noche diseño
+          <span class="hero__lead-em">lenguajes que compilan a C</span> y escribo compiladores en Rust. Me atraen los problemas donde la solución correcta no es obvia.
+        </p>
+        <div class="hero__actions">
+          <a href="/" data-scroll="contact" data-hover class="btn-primary">Get in touch →</a>
+          <a href="https://github.com/joordih/" target="_blank" data-hover class="btn-ghost">GitHub</a>
+          <a href="https://www.linkedin.com/in/jxaviermacho/" target="_blank" data-hover class="btn-ghost">LinkedIn</a>
+        </div>
+      </div>
+      <div class="hero__terminal-wrap">
+        <div class="terminal">
+          <div class="terminal__bar">
+            <span class="terminal__dot terminal__dot--red"></span>
+            <span class="terminal__dot terminal__dot--yellow"></span>
+            <span class="terminal__dot terminal__dot--green"></span>
+            <span class="terminal__label">nexus — build</span>
+          </div>
+          <pre class="terminal__pre"><span style="color:var(--accent)">$</span> nexus build --release
+<span style="color:var(--green)">→</span> stage-0 <span style="color:var(--faint)">(rust)</span>   <span style="color:var(--green)">ok</span>
+<span style="color:var(--green)">→</span> self-host       <span style="color:var(--green)">ok</span>
+<span style="color:var(--green)">→</span> emit C → cc      <span style="color:var(--green)">ok</span>
+<span style="color:var(--faint)">binary ready · 0.42s</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about" class="section">
+    <div class="eyebrow" data-reveal><span>01 — PROFILE</span><span class="eyebrow__line"></span></div>
+    <h2 class="heading" data-reveal>The person behind the <span class="heading__italic">code</span></h2>
+    <div class="about__grid">
+      <p class="about__text" data-reveal>
+        Soy Jordi — developer en Mallorca. Me obsesiona entender cómo funcionan las cosas por dentro, así que cuando una herramienta me intriga, la reconstruyo desde cero: un framework de web components sin runtime, un lenguaje con su propio compilador, un motor de rutas sobre un grafo.
+        <span style="color:var(--muted)">Disfruto el punto donde la ingeniería se vuelve diseño y no hay un camino marcado.</span>
+      </p>
+      <div class="about__card" data-reveal>
+        <div class="about__row"><span class="about__label">LOCATION</span><span class="about__value">Mallorca, ES</span></div>
+        <div class="about__row"><span class="about__label">FOCUS</span><span class="about__value">Compilers · Systems</span></div>
+        <div class="about__row"><span class="about__label">CURRENTLY</span><span class="about__value">Self-hosting Nexus</span></div>
+        <div class="about__row"><span class="about__label">OPEN TO</span><span class="about__value about__value--accent">Collaborations</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects" class="section">
+    <div class="eyebrow" data-reveal><span>02 — WORK</span><span class="eyebrow__line"></span></div>
+    <h2 class="heading" data-reveal>Selected <span class="heading__italic">builds</span></h2>
+    <div class="projects__grid" data-projects></div>
+  </section>
+
+  <section id="contact" class="section section--contact">
+    <div class="eyebrow" data-reveal><span>03 — CONTACT</span><span class="eyebrow__line"></span></div>
+    <h2 class="heading heading--contact" data-reveal>Let's <span class="heading__accent">talk</span></h2>
+    <p class="contact__lead" data-reveal">¿Un proyecto raro, un compilador, una idea sin camino marcado? Escríbeme.</p>
+    <div class="contact__grid" data-reveal>
+      <a href="https://github.com/joordih/" target="_blank" data-hover class="contact-card">
+        <div><div class="contact-card__label">GITHUB</div><div class="contact-card__value">@joordih</div></div>
+        <span class="contact-card__arrow">↗</span>
+      </a>
+      <a href="https://www.linkedin.com/in/jxaviermacho/" target="_blank" data-hover class="contact-card">
+        <div><div class="contact-card__label">LINKEDIN</div><div class="contact-card__value">Jordi Xavier Macho</div></div>
+        <span class="contact-card__arrow">↗</span>
+      </a>
+    </div>
+  </section>
+</main>

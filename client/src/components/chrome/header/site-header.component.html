@@ -1,0 +1,36 @@
+<header class="header">
+  <div class="brand-row">
+    <a href="/" data-hover class="brand">
+      <span class="brand__logo">JX</span>
+      <span class="brand__text">jordi<span class="brand__muted">.dev</span></span>
+    </a>
+    <button type="button" class="theme-btn" data-theme-toggle aria-label="Toggle theme">☀</button>
+  </div>
+  <div class="nav-cluster" data-more-root>
+    <nav class="nav">
+      <a href="/" data-nav="home" data-scroll="home" data-hover class="nav__link nav__link--active">Home</a>
+      <a href="/" data-nav="about" data-scroll="about" data-hover class="nav__link">About</a>
+      <a href="/" data-nav="projects" data-scroll="projects" data-hover class="nav__link">Projects</a>
+      <button type="button" class="more-btn" data-nav="more" data-more-toggle data-hover>
+        More
+        <span class="caret" data-caret></span>
+      </button>
+      <a href="/dashboard" data-nav="dashboard" data-dashboard-link data-hover class="nav__link nav__link--dashboard">Dashboard</a>
+    </nav>
+    <a href="/" data-scroll="contact" data-hover class="cta">Let's talk</a>
+    <div class="dropdown" data-dropdown>
+      <a href="/stack" data-hover class="drop-card">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <div><div class="drop-card__title">Stack</div><div class="drop-card__sub">24 tools I use</div></div>
+      </a>
+      <a href="/blog" data-hover class="drop-card">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
+        <div><div class="drop-card__title">Blog</div><div class="drop-card__sub">Read my notes</div></div>
+      </a>
+      <a href="/guestbook" data-hover class="drop-card drop-card--wide">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"/><path d="M18 17H6"/></svg>
+        <div><div class="drop-card__title">Guestbook</div><div class="drop-card__sub">Sign my wall</div></div>
+      </a>
+    </div>
+  </div>
+</header>

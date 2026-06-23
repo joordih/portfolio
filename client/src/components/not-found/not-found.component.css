@@ -1,0 +1,39 @@
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 160px 24px 90px;
+  text-align: center;
+}
+
+.code {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0 0 16px;
+  font-size: clamp(40px, 8vw, 72px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.desc {
+  margin: 0 0 32px;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.link {
+  display: inline-flex;
+  padding: 13px 22px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+}

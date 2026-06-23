@@ -1,0 +1,26 @@
+{
+  "name": "portfolio-client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tiptap/core": "3.27.1",
+    "@tiptap/extension-link": "3.27.1",
+    "@tiptap/html": "^3.27.1",
+    "@tiptap/starter-kit": "3.27.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.16.0",
+    "typescript": "~5.8.3",
+    "vite": "^5.4.19"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.62.2"
+  }
+}

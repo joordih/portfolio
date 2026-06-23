@@ -1,0 +1,103 @@
+:root {
+  --bg: #08080a;
+  --bg2: #0d0d10;
+  --panel: rgba(255, 255, 255, 0.025);
+  --panel2: rgba(255, 255, 255, 0.05);
+  --glass: rgba(18, 18, 22, 0.55);
+  --glass-brd: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #ededf0;
+  --muted: #8e8e98;
+  --faint: #5a5a64;
+  --accent: #ff7a45;
+  --accent-soft: rgba(255, 122, 69, 0.14);
+  --green: #5ee08a;
+  --dot-lang: #ff7a45;
+  --dot-back: #4ecdc4;
+  --dot-front: #a78bfa;
+  --dot-data: #5ee08a;
+  --dot-tool: #9aa0aa;
+}
+
+:root[data-theme="light"] {
+  --bg: #f3f1ea;
+  --bg2: #ffffff;
+  --panel: rgba(0, 0, 0, 0.025);
+  --panel2: rgba(0, 0, 0, 0.045);
+  --glass: rgba(255, 255, 255, 0.6);
+  --glass-brd: rgba(255, 255, 255, 0.75);
+  --border: rgba(0, 0, 0, 0.09);
+  --text: #15150f;
+  --muted: #5c5c54;
+  --faint: #9a9a90;
+  --accent: #d8541f;
+  --accent-soft: rgba(216, 84, 31, 0.12);
+  --green: #1f9d52;
+  --dot-back: #0f9b91;
+  --dot-front: #7c3aed;
+  --dot-data: #1f9d52;
+  --dot-tool: #5c5c54;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.5s ease, color 0.5s ease;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+
+.atmosphere-gradient {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(900px 600px at 78% -10%, var(--accent-soft), transparent 60%),
+    radial-gradient(700px 500px at 12% 110%, rgba(124, 131, 255, 0.08), transparent 60%);
+}
+
+.atmosphere-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(1000px 700px at 50% 20%, #000, transparent 75%);
+  -webkit-mask-image: radial-gradient(1000px 700px at 50% 20%, #000, transparent 75%);
+}

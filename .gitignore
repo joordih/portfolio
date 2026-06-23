@@ -1,0 +1,58 @@
+# Local tooling / IDE artifacts
+claude-design/
+.reference/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+api/_lib/
+scripts/.turso-import.dump.sql
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# SQLite (local dev; regenerated on deploy)
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Vercel
+.vercel/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.idea/
+*.swp
+*.swo
+*~
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+mcps/
