@@ -1,0 +1,81 @@
+@media (min-width: 821px) {
+  site-header-component .gnav-island,
+  site-header-component .gnav-pill,
+  site-header-component .gnav-contact,
+  .jx-chrome-sheet,
+  .jx-chrome-window {
+    background: var(--glass-chrome);
+    border-color: var(--glass-chrome-brd);
+  }
+
+  site-header-component[data-glass-state="fallback-backdrop"] .gnav-pill--glass:not(.jx-glass--webgl) {
+    backdrop-filter: blur(36px) saturate(158%);
+    -webkit-backdrop-filter: blur(36px) saturate(158%);
+    box-shadow:
+      0 18px 52px var(--shadow),
+      inset 0 1.5px 0 color-mix(in srgb, #fff 24%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, #000 10%, transparent);
+  }
+
+  site-header-component[data-glass-state="fallback-backdrop"] .gnav-pill--glass:not(.jx-glass--webgl) .gnav-pill__indicator {
+    visibility: visible;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: brightness(1.45) saturate(1.7);
+    -webkit-backdrop-filter: brightness(1.45) saturate(1.7);
+    box-shadow:
+      inset 0 2px 3px color-mix(in srgb, #fff 38%, transparent),
+      inset 0 -1px 2px color-mix(in srgb, #fff 14%, transparent),
+      0 8px 24px color-mix(in srgb, var(--shadow) 75%, transparent);
+  }
+
+  site-header-component[data-glass-state="fallback-backdrop"] .gnav-island--glass:not(.jx-glass--webgl),
+  site-header-component[data-glass-state="fallback-backdrop"] .gnav-contact--glass:not(.jx-glass--webgl),
+  site-header-component[data-glass-state="fallback-backdrop"] .gnav-drop--glass:not(.jx-glass--webgl) {
+    backdrop-filter: blur(30px) saturate(162%);
+    -webkit-backdrop-filter: blur(30px) saturate(162%);
+  }
+
+  site-header-component[data-glass-state="fallback-backdrop"] .gnav-contact--glass:not(.jx-glass--webgl).gnav-contact--active {
+    background: color-mix(in srgb, var(--accent) 42%, var(--glass-chrome));
+    border-color: color-mix(in srgb, var(--accent) 50%, var(--glass-chrome-brd));
+    box-shadow:
+      0 14px 40px color-mix(in srgb, var(--accent) 28%, var(--shadow)),
+      inset 0 1px 0 color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+
+  .jx-chrome-sheet.gnav-drop--open:not(.jx-glass--webgl) {
+    backdrop-filter: blur(36px) saturate(168%);
+    -webkit-backdrop-filter: blur(36px) saturate(168%);
+    box-shadow:
+      0 32px 72px var(--shadow),
+      inset 0 1px 0 color-mix(in srgb, #fff 16%, transparent),
+      inset 0 -0.5px 0 color-mix(in srgb, #000 6%, transparent);
+  }
+
+  .jx-chrome-window:not(.jx-glass--webgl) {
+    backdrop-filter: blur(36px) saturate(165%);
+    -webkit-backdrop-filter: blur(36px) saturate(165%);
+    box-shadow:
+      0 32px 72px var(--shadow),
+      inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, #000 10%, transparent);
+  }
+
+  .jx-chrome-window .terminal__bar {
+    background: color-mix(in srgb, var(--bg) 28%, transparent);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+  }
+}
+
+@media (min-width: 821px) and (prefers-reduced-transparency: no-preference) {
+  .jx-chrome-sheet.gnav-drop--open:not(.jx-glass--webgl) {
+    backdrop-filter: blur(40px) saturate(175%);
+    -webkit-backdrop-filter: blur(40px) saturate(175%);
+  }
+
+  .jx-chrome-window:not(.jx-glass--webgl) {
+    backdrop-filter: blur(40px) saturate(170%);
+    -webkit-backdrop-filter: blur(40px) saturate(170%);
+  }
+}

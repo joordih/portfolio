@@ -59,14 +59,14 @@
 .ghost-btn {
   padding: 10px 18px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text);
   font-family: var(--font-sans);
   font-weight: 500;
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.25s var(--ease-out), border-color 0.25s var(--ease-out), transform 0.25s var(--ease-out);
+  transition: background 0.25s var(--ease-out), border-color 0.25s var(--ease-out);
 }
 
 .ghost-btn:hover {
@@ -74,22 +74,17 @@
   border-color: var(--glass-brd);
 }
 
-.ghost-btn:active,
-.save-btn:active {
-  transform: scale(0.98);
-}
-
 .save-btn {
   padding: 10px 20px;
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: var(--accent);
   color: #fff;
   font-family: var(--font-sans);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.25s var(--ease-out), transform 0.25s var(--ease-out);
+  transition: background 0.25s var(--ease-out);
 }
 
 .save-btn:hover {

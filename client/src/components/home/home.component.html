@@ -2,25 +2,23 @@
   <section id="home" class="section section--hero">
     <div class="hero__grid">
       <div class="hero__copy">
-        <p class="hero__badge" data-reveal>
-          <span class="hero__dot"></span>
-          Mallorca, compilers &amp; systems
-        </p>
-        <h1 class="hero__title" data-reveal>
+        <p class="hero__badge">Mallorca, compilers &amp; systems</p>
+        <h1 class="hero__title">
           Jordi<br />Xavier<span class="hero__accent">.</span>
         </h1>
-        <p class="hero__lead" data-reveal>
+        <p class="hero__lead">
           Full-stack developer in Mallorca. I build APIs by day and
           <span class="hero__lead-em">self-hosting compilers</span> by night.
         </p>
-        <div class="hero__actions" data-reveal>
+        <div class="hero__actions">
           <a href="/" data-scroll="contact" data-hover class="btn-primary">Contact</a>
           <a href="https://github.com/joordih/" target="_blank" rel="noopener" data-hover class="btn-ghost">GitHub</a>
-          <a href="https://www.linkedin.com/in/jxaviermacho/" target="_blank" rel="noopener" data-hover class="btn-ghost">LinkedIn</a>
+          <a href="https://www.linkedin.com/in/jxaviermacho/" target="_blank" rel="noopener" data-hover
+            class="btn-ghost">LinkedIn</a>
         </div>
       </div>
-      <div class="hero__terminal-wrap" data-reveal>
-        <div class="terminal">
+      <div class="hero__terminal-wrap">
+        <div class="terminal jx-chrome-window jx-glass-root" data-glass-terminal>
           <div class="terminal__bar">
             <span class="terminal__dot terminal__dot--red"></span>
             <span class="terminal__dot terminal__dot--yellow"></span>
@@ -28,53 +26,62 @@
             <span class="terminal__label">nexus - build</span>
           </div>
           <pre class="terminal__pre"><span class="terminal__prompt">$</span> nexus build --release
-<span class="terminal__ok">→</span> stage-0 <span class="terminal__dim">(rust)</span>   <span class="terminal__ok">ok</span>
-<span class="terminal__ok">→</span> self-host       <span class="terminal__ok">ok</span>
-<span class="terminal__ok">→</span> emit C → cc      <span class="terminal__ok">ok</span>
+<span class="terminal__ok" data-icon="arrow-right" data-icon-size="12"></span> stage-0 <span class="terminal__dim">(rust)</span>   <span class="terminal__ok">ok</span>
+<span class="terminal__ok" data-icon="arrow-right" data-icon-size="12"></span> self-host       <span class="terminal__ok">ok</span>
+<span class="terminal__ok" data-icon="arrow-right" data-icon-size="12"></span> emit C <span class="terminal__dim">to</span> cc      <span class="terminal__ok">ok</span>
 <span class="terminal__dim">binary ready · 0.42s</span></pre>
+          <canvas class="jx-glass__canvas" data-glass-canvas aria-hidden="true" hidden></canvas>
         </div>
       </div>
     </div>
   </section>
 
   <section id="about" class="section">
-    <h2 class="heading" data-reveal>The person behind the <span class="heading__italic">code</span></h2>
+    <h2 class="heading">The person behind the <span class="heading__italic">code</span></h2>
     <div class="about__grid">
-      <p class="about__text" data-reveal>
-        I'm Jordi, a developer based in Mallorca. I like understanding how things work from the inside, so when a tool intrigues me I often rebuild it: a web component framework with no runtime, a language with its own compiler, a routing engine on top of a graph.
-        <span class="about__muted">The interesting part is where engineering turns into design and there is no obvious path.</span>
+      <p class="about__text">
+        I'm Jordi, a developer based in Mallorca. I like understanding how things work from the inside, so when a tool
+        intrigues me I often rebuild it: a web component framework with no runtime, a language with its own compiler, a
+        routing engine on top of a graph.
+        <span class="about__muted">The interesting part is where engineering turns into design and there is no obvious
+          path.</span>
       </p>
-      <div class="about__card" data-reveal>
-        <div class="about__row"><span class="about__label">Location</span><span class="about__value">Mallorca, ES</span></div>
-        <div class="about__row"><span class="about__label">Focus</span><span class="about__value">Compilers, systems</span></div>
-        <div class="about__row"><span class="about__label">Currently</span><span class="about__value">Self-hosting Nexus</span></div>
-        <div class="about__row"><span class="about__label">Open to</span><span class="about__value about__value--accent">Collaborations</span></div>
+      <div class="about__card">
+        <div class="about__row"><span class="about__label">Location</span><span class="about__value">Mallorca, ES</span>
+        </div>
+        <div class="about__row"><span class="about__label">Focus</span><span class="about__value">Compilers,
+            systems</span></div>
+        <div class="about__row"><span class="about__label">Currently</span><span class="about__value">Self-hosting
+            Nexus</span></div>
+        <div class="about__row"><span class="about__label">Open to</span><span
+            class="about__value about__value--accent">Collaborations</span></div>
       </div>
     </div>
   </section>
 
   <section id="projects" class="section">
-    <h2 class="heading" data-reveal>Selected <span class="heading__italic">builds</span></h2>
+    <h2 class="heading">Selected <span class="heading__italic">builds</span></h2>
     <div class="projects__grid" data-projects></div>
   </section>
 
   <section id="contact" class="section section--contact">
-    <h2 class="heading heading--contact" data-reveal>Let's <span class="heading__accent">talk</span></h2>
-    <p class="contact__lead" data-reveal>An unusual project, a compiler idea, or something without a clear path. Write me.</p>
-    <div class="contact__grid" data-reveal>
+    <h2 class="heading heading--contact">Let's <span class="heading__accent">talk</span></h2>
+    <p class="contact__lead">An unusual project, a compiler idea, or something without a clear path. Write me.</p>
+    <div class="contact__grid">
       <a href="https://github.com/joordih/" target="_blank" rel="noopener" data-hover class="contact-card">
         <div>
           <div class="contact-card__label">GitHub</div>
           <div class="contact-card__value">@joordih</div>
         </div>
-        <span class="contact-card__arrow" aria-hidden="true">↗</span>
+        <span class="contact-card__arrow" data-icon="arrow-up-right" data-icon-size="20"></span>
       </a>
-      <a href="https://www.linkedin.com/in/jxaviermacho/" target="_blank" rel="noopener" data-hover class="contact-card">
+      <a href="https://www.linkedin.com/in/jxaviermacho/" target="_blank" rel="noopener" data-hover
+        class="contact-card">
         <div>
           <div class="contact-card__label">LinkedIn</div>
           <div class="contact-card__value">Jordi Xavier Macho</div>
         </div>
-        <span class="contact-card__arrow" aria-hidden="true">↗</span>
+        <span class="contact-card__arrow" data-icon="arrow-up-right" data-icon-size="20"></span>
       </a>
     </div>
   </section>

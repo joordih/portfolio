@@ -5,6 +5,11 @@ export default defineConfig({
   base: "/",
   build: {
     assetsInlineLimit: 0,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, "index.html"),
+      },
+    },
   },
   resolve: {
     alias: {
@@ -14,6 +19,7 @@ export default defineConfig({
     },
   },
   server: {
+    port: 5180,
     proxy: {
       "/api": "http://localhost:8080",
       "/auth": "http://localhost:8080",

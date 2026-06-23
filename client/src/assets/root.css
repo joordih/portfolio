@@ -6,6 +6,8 @@
   --panel2: rgba(255, 255, 255, 0.055);
   --glass: rgba(20, 18, 16, 0.62);
   --glass-brd: rgba(255, 255, 255, 0.1);
+  --glass-chrome: var(--glass);
+  --glass-chrome-brd: var(--glass-brd);
   --border: rgba(255, 255, 255, 0.075);
   --text: #f2f0eb;
   --muted: #9a948a;
@@ -15,11 +17,6 @@
   --accent-soft: rgba(212, 98, 58, 0.16);
   --shadow: rgba(12, 8, 4, 0.45);
   --green: #5cb87a;
-  --dot-lang: #d4623a;
-  --dot-back: #3d8f8a;
-  --dot-front: #c4a24a;
-  --dot-data: #5cb87a;
-  --dot-tool: #8a8278;
   --font-sans: "Outfit", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --container: 1180px;
@@ -43,6 +40,8 @@
   --panel2: rgba(0, 0, 0, 0.05);
   --glass: rgba(255, 255, 255, 0.72);
   --glass-brd: rgba(255, 255, 255, 0.9);
+  --glass-chrome: var(--glass);
+  --glass-chrome-brd: var(--glass-brd);
   --border: rgba(0, 0, 0, 0.08);
   --text: #141210;
   --muted: #5c574f;
@@ -52,10 +51,6 @@
   --accent-soft: rgba(194, 78, 40, 0.12);
   --shadow: rgba(60, 40, 20, 0.12);
   --green: #1a8f4e;
-  --dot-back: #0f7a72;
-  --dot-front: #9a7b1e;
-  --dot-data: #1a8f4e;
-  --dot-tool: #5c574f;
 }
 
 * {
@@ -157,6 +152,13 @@ a {
   :root {
     --glass: var(--bg-elevated);
     --glass-brd: var(--border);
+    --glass-chrome: rgba(20, 18, 16, 0.52);
+    --glass-chrome-brd: rgba(255, 255, 255, 0.16);
+  }
+
+  :root[data-theme="light"] {
+    --glass-chrome: rgba(255, 255, 255, 0.62);
+    --glass-chrome-brd: rgba(0, 0, 0, 0.08);
   }
 }
 

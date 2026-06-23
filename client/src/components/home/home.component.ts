@@ -1,23 +1,32 @@
 import { adoptStyles } from "@/utils/styles";
 import { escapeHtml } from "@/utils/html";
 import shared from "@/assets/shared.css?raw";
+import chromeGlass from "@/assets/chrome-glass.css?raw";
+import glassUi from "@/assets/glass-chrome-ui.css?raw";
 import css from "./home.component.css?raw";
 import html from "./home.component.html?raw";
 import { getProjects } from "@/data/projects";
+import { hydrateIcons, iconSvg } from "@/utils/icon";
+import { GlassChromeOverlay } from "@/lib/glass-chrome/overlay";
+import { getGnavGlassMode, shouldMountGnavGlass } from "@/utils/glass-support";
 
 class HomeComponent extends HTMLElement {
   private shadow: ShadowRoot;
-  private revealIo?: IntersectionObserver;
   private spyIo?: IntersectionObserver;
   private sectionEls: HTMLElement[] = [];
   private activeSection = "";
   private scrollRaf = 0;
+  private terminalGlass: GlassChromeOverlay | null = null;
   private readonly onScroll: () => void;
+  private readonly onTheme: () => void;
+  private readonly onResize: () => void;
 
   constructor() {
     super();
     this.shadow = this.attachShadow({ mode: "open" });
     this.onScroll = () => this.handleScroll();
+    this.onTheme = () => this.terminalGlass?.refreshTint();
+    this.onResize = () => this.handleResize();
     this.loadStyles();
   }
 
@@ -26,34 +35,76 @@ class HomeComponent extends HTMLElement {
     this.setupEventListeners();
     void this.loadProjects();
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => this.updateActiveSection());
+      requestAnimationFrame(() => {
+        this.updateActiveSection();
+        this.initGlass();
+      });
     });
   }
 
   disconnectedCallback(): void {
     this.disconnectEventListeners();
+    this.terminalGlass?.destroy();
+    this.terminalGlass = null;
   }
 
   private loadStyles(): void {
-    adoptStyles(this.shadow, shared, css);
+    adoptStyles(this.shadow, shared, chromeGlass, glassUi, css);
   }
 
   private render(): void {
     this.shadow.innerHTML = html;
+    hydrateIcons(this.shadow);
     this.initObservers();
   }
 
   private setupEventListeners(): void {
     window.addEventListener("scroll", this.onScroll, { passive: true });
+    document.addEventListener("portfolio:theme", this.onTheme);
+    window.addEventListener("resize", this.onResize, { passive: true });
   }
 
   private disconnectEventListeners(): void {
-    this.revealIo?.disconnect();
     this.spyIo?.disconnect();
     window.removeEventListener("scroll", this.onScroll);
+    document.removeEventListener("portfolio:theme", this.onTheme);
+    window.removeEventListener("resize", this.onResize);
 
     if (this.scrollRaf) {
       cancelAnimationFrame(this.scrollRaf);
+    }
+  }
+
+  private initGlass(): void {
+    if (!shouldMountGnavGlass()) return;
+
+    const terminal = this.shadow.querySelector<HTMLElement>("[data-glass-terminal]");
+    if (!terminal) return;
+
+    try {
+      this.terminalGlass?.destroy();
+      this.terminalGlass = new GlassChromeOverlay(terminal, {
+        id: "hero-terminal",
+        mode: "static",
+        enableWebGL: getGnavGlassMode() === "full",
+        mountedClass: "terminal--glass",
+        focusRadius: 20,
+      });
+      this.terminalGlass.mount();
+    } catch (err) {
+      console.warn("[home] terminal glass unavailable:", err);
+      this.terminalGlass = null;
+    }
+  }
+
+  private handleResize(): void {
+    if (!shouldMountGnavGlass()) {
+      this.terminalGlass?.destroy();
+      this.terminalGlass = null;
+      return;
+    }
+    if (!this.terminalGlass) {
+      this.initGlass();
     }
   }
 
@@ -74,9 +125,9 @@ class HomeComponent extends HTMLElement {
     grid.innerHTML = projects
       .map(
         (project, index) => /* html */ `
-      <a href="${escapeHtml(project.url)}" target="_blank" rel="noopener" data-reveal data-hover class="project-card${index === 0 ? " project-card--feature" : ""}">
+      <a href="${escapeHtml(project.url)}" target="_blank" rel="noopener" data-hover class="project-card${index === 0 ? " project-card--feature" : ""}">
         <div class="project-card__top">
-          <span class="project-card__arrow" aria-hidden="true">↗</span>
+          ${iconSvg("arrow-up-right", 20, "project-card__arrow")}
         </div>
         <h3 class="project-card__title">${escapeHtml(project.title)}</h3>
         <p class="project-card__desc">${escapeHtml(project.description)}</p>
@@ -125,7 +176,6 @@ class HomeComponent extends HTMLElement {
   }
 
   private initObservers(): void {
-    this.revealIo?.disconnect();
     this.spyIo?.disconnect();
 
     this.sectionEls = [...this.shadow.querySelectorAll("section[id]")] as HTMLElement[];
@@ -135,37 +185,6 @@ class HomeComponent extends HTMLElement {
     });
     this.sectionEls.forEach((section) => this.spyIo!.observe(section));
     this.updateActiveSection();
-
-    const revealTargets = [...this.shadow.querySelectorAll("[data-reveal]")];
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    if (reduceMotion) {
-      revealTargets.forEach((element) => {
-        (element as HTMLElement).style.opacity = "";
-      });
-      return;
-    }
-
-    revealTargets.forEach((element) => {
-      if (!(element as HTMLElement).style.animation) {
-        (element as HTMLElement).style.opacity = "0";
-      }
-    });
-
-    this.revealIo = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-
-          const element = entry.target as HTMLElement;
-          element.style.animation = "fadeUp 0.7s both";
-          element.style.opacity = "";
-          this.revealIo?.unobserve(element);
-        });
-      },
-      { threshold: 0.12 }
-    );
-    revealTargets.forEach((element) => this.revealIo!.observe(element));
   }
 }
 

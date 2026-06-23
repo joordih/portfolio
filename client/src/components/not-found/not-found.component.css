@@ -43,20 +43,14 @@
 .link {
   display: inline-flex;
   padding: 14px 24px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: var(--accent);
   color: #fff;
   font-weight: 600;
   font-size: 15px;
-  box-shadow: 0 14px 32px var(--accent-soft);
-  transition: transform 0.25s var(--ease-out), background 0.25s var(--ease-out);
+  transition: background 0.25s var(--ease-out);
 }
 
 .link:hover {
-  transform: translateY(-2px);
   background: var(--accent-hover);
-}
-
-.link:active {
-  transform: scale(0.98);
 }

@@ -1,0 +1,45 @@
+.jx-glass-root {
+  position: relative;
+}
+
+.jx-glass__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.jx-glass__indicator {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: brightness(1.25) saturate(1.5);
+  -webkit-backdrop-filter: brightness(1.25) saturate(1.5);
+  box-shadow:
+    inset 0 1px 1px color-mix(in srgb, #fff 28%, transparent),
+    inset 0 -0.5px 1px color-mix(in srgb, #fff 10%, transparent),
+    0 4px 16px var(--shadow);
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, width, height, opacity;
+  transform-origin: center center;
+  z-index: 1;
+}
+
+.jx-glass--webgl {
+  backdrop-filter: blur(22px) saturate(155%) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(155%) !important;
+}
+
+.jx-glass--webgl .jx-glass__indicator {
+  visibility: hidden;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}

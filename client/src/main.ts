@@ -1,5 +1,8 @@
+import "./assets/chrome-glass.css";
+import "./assets/glass-chrome-ui.css";
 import "./components/shell/page/page.component";
 import "./components/chrome/cursor/custom-cursor.component";
+import "./components/chrome/header/site-header.component.css";
 import "./components/chrome/header/site-header.component";
 import "./components/chrome/footer/site-footer.component";
 import "./components/home/home.component";

@@ -2,15 +2,17 @@
 
 Personal portfolio site with a static frontend, Express API, admin dashboard, blog, guestbook, and GitHub OAuth. Deploys as a single Vercel project: the Vite build serves the SPA and API routes run as one serverless function.
 
-**Live demo:** [joordih.vercel.app](https://joordih.vercel.app)
+Demo: [joordih.vercel.app](https://joordih.vercel.app)
 
 ## Features
 
-- **Home** — Hero, about, projects (loaded from the API), contact
-- **Stack** — Tools and technologies page
-- **Blog** — Posts with slug URLs and a Tiptap editor in the dashboard
-- **Guestbook** — GitHub-authenticated wall signatures
-- **Dashboard** — Admin panel for signatures, posts, and projects (GitHub OAuth + `ADMIN_LOGIN`)
+| Page | What it does |
+|------|--------------|
+| Home | Hero, about, projects (from the API), contact |
+| Stack | Tools and technologies |
+| Blog | Posts with slug URLs; Tiptap editor in the dashboard |
+| Guestbook | GitHub-authenticated wall signatures |
+| Dashboard | Admin for signatures, posts, and projects (`ADMIN_LOGIN`) |
 
 ## Stack
 
@@ -19,7 +21,7 @@ Personal portfolio site with a static frontend, Express API, admin dashboard, bl
 | Frontend | Vite, TypeScript, native Web Components |
 | Editor | Tiptap 3 (StarterKit + Link) |
 | API | Express 5, TypeScript |
-| Database | libSQL — SQLite locally, [Turso](https://turso.tech) on Vercel |
+| Database | libSQL (SQLite locally, [Turso](https://turso.tech) on Vercel) |
 | Auth | GitHub OAuth, cookie sessions |
 | Hosting | Vercel (SPA + serverless API) |
 
@@ -38,7 +40,7 @@ portfolio/
 
 ## Local development
 
-**Requirements:** Node.js 20+, npm
+Node.js 20+ and npm.
 
 ```bash
 git clone https://github.com/joordih/portfolio.git
@@ -113,17 +115,19 @@ turso db tokens create portfolio
 
 Add `LIBSQL_URL` and `LIBSQL_AUTH_TOKEN` to Vercel. Tables are created and seeded automatically on first request when the database is empty.
 
-To import an existing local `server/data.db`, enable WAL mode first (`PRAGMA journal_mode=WAL`), then use Turso’s SQLite upload in the dashboard.
+To import an existing local `server/data.db`, enable WAL mode first (`PRAGMA journal_mode=WAL`), then use Turso's SQLite upload in the dashboard.
 
 ## Customization
 
 Fork the repo and adjust:
 
-- **Branding & copy** — `client/src/components/home/`, `client/index.html`
-- **Header / footer** — `client/src/components/chrome/`
-- **Admin user** — `ADMIN_LOGIN` env var (your GitHub username)
-- **Theme** — CSS variables in `client/src/assets/root.css`
-- **Seed data** — `server/src/db.ts` (`seedIfEmpty`) for fresh installs only; production data lives in Turso
+| What | Where |
+|------|-------|
+| Branding and copy | `client/src/components/home/`, `client/index.html` |
+| Header and footer | `client/src/components/chrome/` |
+| Admin user | `ADMIN_LOGIN` env var (your GitHub username) |
+| Theme | CSS variables in `client/src/assets/root.css` |
+| Seed data | `server/src/db.ts` (`seedIfEmpty`); production data lives in Turso |
 
 ## Scripts
 
@@ -136,4 +140,4 @@ Fork the repo and adjust:
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

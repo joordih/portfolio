@@ -28,6 +28,7 @@ class PageComponent extends HTMLElement {
   private routes: RouteMap = {};
   private basePath = "/";
   private controller?: AbortController;
+  private sectionScrollTarget: string | null = null;
   private readonly onPopState: () => void;
   private readonly onLinkClick: (event: MouseEvent) => void;
 
@@ -165,7 +166,7 @@ class PageComponent extends HTMLElement {
 
       const element = document.createElement("post-component");
       element.setAttribute("slug", slug);
-      this.swapView(element);
+      await this.swapView(element);
       document.title = `${slug} | Jordi Xavier`;
       this.notifyRoute(path);
       return;
@@ -185,7 +186,7 @@ class PageComponent extends HTMLElement {
     }
 
     const element = document.createElement(target);
-    this.swapView(element);
+    await this.swapView(element);
     this.notifyRoute(path);
 
     if (path === "/" && location.hash) {
@@ -198,42 +199,53 @@ class PageComponent extends HTMLElement {
   }
 
   private async navigateToSection(id: string): Promise<void> {
-    if (location.pathname !== "/" || !this.view.querySelector("home-component")) {
+    const onHome = location.pathname === "/" && this.view.querySelector("home-component");
+
+    if (!onHome) {
       history.pushState({}, "", "/");
+      this.sectionScrollTarget = id;
       await this.mountPage("/");
+      this.sectionScrollTarget = null;
     } else {
       history.replaceState({}, "", "/");
     }
 
-    requestAnimationFrame(() => this.scrollToSection(id));
+    await this.scrollToSection(id);
   }
 
-  private swapView(element: HTMLElement): void {
-    const update = () => {
-      this.view.replaceChildren(element);
+  private swapView(element: HTMLElement): Promise<void> {
+    return new Promise((resolve) => {
+      const update = () => {
+        this.view.replaceChildren(element);
 
-      if (!location.hash) {
-        document.documentElement.scrollTop = 0;
+        if (!location.hash && !this.sectionScrollTarget) {
+          document.documentElement.scrollTop = 0;
+        }
+
+        requestAnimationFrame(() => resolve());
+      };
+
+      const doc = document as { startViewTransition?: (callback: () => void) => void };
+      if (doc.startViewTransition) {
+        doc.startViewTransition(update);
+      } else {
+        update();
       }
-    };
-
-    const doc = document as { startViewTransition?: (callback: () => void) => void };
-    if (doc.startViewTransition) {
-      doc.startViewTransition(update);
-    } else {
-      update();
-    }
+    });
   }
 
-  private scrollToSection(id: string): void {
-    const home = this.view.querySelector("home-component");
-    if (!home) return;
+  private async scrollToSection(id: string): Promise<void> {
+    for (let attempt = 0; attempt < 40; attempt++) {
+      const home = this.view.querySelector("home-component");
+      const shadow = (home as HTMLElement & { shadowRoot: ShadowRoot | null } | null)?.shadowRoot;
+      const target = shadow?.getElementById(id);
 
-    const shadow = (home as HTMLElement & { shadowRoot: ShadowRoot | null }).shadowRoot;
-    const target = shadow?.getElementById(id);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
 
-    if (target) {
-      target.scrollIntoView({ behavior: "smooth" });
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     }
   }
 }

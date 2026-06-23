@@ -7,7 +7,7 @@
 .new-btn {
   padding: 10px 18px;
   border: none;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: var(--accent);
   color: #fff;
   font-family: var(--font-sans);
@@ -22,7 +22,7 @@
 }
 
 .new-btn:active {
-  transform: scale(0.98);
+
 }
 
 .list {
@@ -57,7 +57,7 @@
   font-family: var(--font-mono);
   font-size: 11px;
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   background: var(--panel2);
   color: var(--muted);
 }

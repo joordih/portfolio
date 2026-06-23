@@ -1,13 +1,15 @@
 import { adoptStyles } from "@/utils/styles";
 import shared from "@/assets/shared.css?raw";
+import glassUi from "@/assets/glass-chrome-ui.css?raw";
 import css from "./dashboard.component.css?raw";
 import html from "./dashboard.component.html?raw";
 import { getMe } from "@/data/signatures";
+import { GlassChromeOverlay } from "@/lib/glass-chrome/overlay";
+import { getGnavGlassMode, shouldMountGnavGlass } from "@/utils/glass-support";
 import "./signatures/admin/signatures-admin.component";
 import "./posts/admin/posts-admin.component";
 import "./projects/admin/projects-admin.component";
-
-const GITHUB_SVG = /* html */ `<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.46-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.05A9.3 9.3 0 0 1 12 6.84c.85 0 1.71.12 2.51.34 1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.81 0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.25C22 6.58 17.52 2 12 2z"/></svg>`;
+import { iconSvg } from "@/utils/icon";
 
 type DashboardTab = "signatures" | "posts" | "projects";
 
@@ -15,24 +17,35 @@ class DashboardComponent extends HTMLElement {
   private shadow: ShadowRoot;
   private tab: DashboardTab = "signatures";
   private shellAbort?: AbortController;
+  private tabsGlass: GlassChromeOverlay | null = null;
+  private readonly onTheme: () => void;
+  private readonly onResize: () => void;
 
   constructor() {
     super();
     this.shadow = this.attachShadow({ mode: "open" });
+    this.onTheme = () => this.tabsGlass?.refreshTint();
+    this.onResize = () => this.handleResize();
     this.loadStyles();
   }
 
   connectedCallback(): void {
     this.render();
+    document.addEventListener("portfolio:theme", this.onTheme);
+    window.addEventListener("resize", this.onResize, { passive: true });
     void this.init();
   }
 
   disconnectedCallback(): void {
     this.disconnectShellEventListeners();
+    document.removeEventListener("portfolio:theme", this.onTheme);
+    window.removeEventListener("resize", this.onResize);
+    this.tabsGlass?.destroy();
+    this.tabsGlass = null;
   }
 
   private loadStyles(): void {
-    adoptStyles(this.shadow, shared, css);
+    adoptStyles(this.shadow, shared, glassUi, css);
   }
 
   private render(): void {
@@ -63,7 +76,7 @@ class DashboardComponent extends HTMLElement {
         <h1 class="gate__title">Dashboard</h1>
         <p class="gate__text">Sign in with GitHub to access the admin dashboard.</p>
         <button type="button" class="github-btn" data-signin data-hover>
-          ${GITHUB_SVG}
+          ${iconSvg("github", 18)}
           Sign in with GitHub
         </button>
       </div>`;
@@ -80,7 +93,10 @@ class DashboardComponent extends HTMLElement {
         <p class="gate__text">Signed in as <strong>@${login}</strong>. Only the site administrator can access the dashboard.</p>
         <div class="gate__actions">
           <button type="button" class="ghost-btn" data-signout data-hover>Sign out</button>
-          <a href="/" data-hover class="ghost-btn ghost-btn--link">Back home →</a>
+          <a href="/" data-hover class="ghost-btn ghost-btn--link">
+            <span>Back home</span>
+            ${iconSvg("arrow-right", 16)}
+          </a>
         </div>
       </div>`;
 
@@ -90,6 +106,8 @@ class DashboardComponent extends HTMLElement {
   }
 
   private renderShell(root: Element, login: string): void {
+    this.tabsGlass?.destroy();
+    this.tabsGlass = null;
     this.disconnectShellEventListeners();
 
     root.innerHTML = /* html */ `
@@ -102,15 +120,67 @@ class DashboardComponent extends HTMLElement {
           <button type="button" class="ghost-btn" data-signout data-hover>Sign out</button>
         </div>
       </div>
-      <div class="tabs">
-        <button type="button" class="tab tab--active" data-tab="signatures">Signatures</button>
-        <button type="button" class="tab" data-tab="posts">Posts</button>
-        <button type="button" class="tab" data-tab="projects">Projects</button>
+      <div class="tabs-pill jx-glass-root" data-glass-tabs>
+        <div class="jx-glass__indicator tabs-pill__indicator" data-glass-indicator aria-hidden="true"></div>
+        <div class="tabs-pill__nav">
+          <button type="button" class="tab tab--active" data-tab="signatures">Signatures</button>
+          <button type="button" class="tab" data-tab="posts">Posts</button>
+          <button type="button" class="tab" data-tab="projects">Projects</button>
+        </div>
+        <div class="tabs-pill__active" data-glass-active-clip aria-hidden="true">
+          <span class="tab-mirror tab-mirror--active">Signatures</span>
+          <span class="tab-mirror">Posts</span>
+          <span class="tab-mirror">Projects</span>
+        </div>
+        <canvas class="jx-glass__canvas" data-glass-canvas aria-hidden="true" hidden></canvas>
       </div>
       <div class="panel" data-panel></div>`;
 
     this.setupShellEventListeners(root);
     this.renderPanel();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => this.initTabsGlass(root));
+    });
+  }
+
+  private initTabsGlass(root: Element): void {
+    this.tabsGlass?.destroy();
+    this.tabsGlass = null;
+
+    if (!shouldMountGnavGlass()) return;
+
+    const tabsPill = root.querySelector<HTMLElement>("[data-glass-tabs]");
+    if (!tabsPill) return;
+
+    try {
+      this.tabsGlass = new GlassChromeOverlay(tabsPill, {
+        id: "dashboard-tabs",
+        mode: "segmented",
+        enableWebGL: getGnavGlassMode() === "full",
+        mountedClass: "tabs-pill--glass",
+        activeSelector: ".tab--active",
+        indicatorHeight: 40,
+      });
+      this.tabsGlass.mount();
+      this.tabsGlass.syncActive();
+    } catch (err) {
+      console.warn("[dashboard] tabs glass unavailable:", err);
+      this.tabsGlass = null;
+    }
+  }
+
+  private handleResize(): void {
+    if (!shouldMountGnavGlass()) {
+      this.tabsGlass?.destroy();
+      this.tabsGlass = null;
+      return;
+    }
+    const root = this.shadow.querySelector("[data-root]");
+    if (root?.querySelector("[data-glass-tabs]") && !this.tabsGlass) {
+      this.initTabsGlass(root);
+    } else {
+      this.tabsGlass?.syncActive();
+    }
   }
 
   private setupShellEventListeners(root: Element): void {
@@ -132,6 +202,13 @@ class DashboardComponent extends HTMLElement {
           this.tab = (button as HTMLElement).dataset.tab as DashboardTab;
           root.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("tab--active"));
           button.classList.add("tab--active");
+          root.querySelectorAll(".tab-mirror").forEach((mirror) => {
+            mirror.classList.toggle(
+              "tab-mirror--active",
+              (mirror as HTMLElement).textContent === button.textContent,
+            );
+          });
+          this.tabsGlass?.syncActive();
           this.renderPanel();
         },
         { signal }

@@ -4,6 +4,7 @@ import shared from "@/assets/shared.css?raw";
 import css from "./post.component.css?raw";
 import html from "./post.component.html?raw";
 import { getPost } from "@/data/posts";
+import { hydrateIcons } from "@/utils/icon";
 
 class PostComponent extends HTMLElement {
   private shadow: ShadowRoot;
@@ -35,6 +36,7 @@ class PostComponent extends HTMLElement {
 
   private render(): void {
     this.shadow.innerHTML = html;
+    hydrateIcons(this.shadow);
   }
 
   private async loadPost(): Promise<void> {
