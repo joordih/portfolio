@@ -6,7 +6,7 @@
   height: 7px;
   border-radius: 50%;
   background: var(--text);
-  z-index: 9999;
+  z-index: var(--z-cursor);
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.2s, width 0.2s, height 0.2s;
@@ -20,7 +20,7 @@
   height: 34px;
   border-radius: 50%;
   border: 1.5px solid var(--muted);
-  z-index: 9999;
+  z-index: var(--z-cursor);
   pointer-events: none;
   opacity: 0;
   transition: width 0.25s ease, height 0.25s ease, border-color 0.25s ease, opacity 0.2s;

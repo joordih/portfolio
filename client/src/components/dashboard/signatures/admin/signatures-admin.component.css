@@ -6,9 +6,11 @@
 .th {
   text-align: left;
   padding: 10px 12px;
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.12em;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
   color: var(--faint);
   border-bottom: 1px solid var(--border);
 }
@@ -21,13 +23,13 @@
 }
 
 .td--user {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   white-space: nowrap;
 }
 
 .td--time {
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   color: var(--faint);
   white-space: nowrap;
@@ -44,10 +46,14 @@
   border-radius: 8px;
   background: var(--bg2);
   color: var(--faint);
-  font-family: "JetBrains Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.25s var(--ease-out), border-color 0.25s var(--ease-out), transform 0.25s var(--ease-out);
+}
+
+.delete-btn:active {
+  transform: scale(0.96);
 }
 
 .delete-btn:hover {

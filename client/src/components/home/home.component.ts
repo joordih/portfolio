@@ -73,11 +73,11 @@ class HomeComponent extends HTMLElement {
 
     grid.innerHTML = projects
       .map(
-        (project) => /* html */ `
-      <a href="${escapeHtml(project.url)}" target="_blank" rel="noopener" data-reveal data-hover class="project-card">
+        (project, index) => /* html */ `
+      <a href="${escapeHtml(project.url)}" target="_blank" rel="noopener" data-reveal data-hover class="project-card${index === 0 ? " project-card--feature" : ""}">
         <div class="project-card__top">
           <span class="project-card__num">${escapeHtml(project.numLabel)}</span>
-          <span class="project-card__arrow">↗</span>
+          <span class="project-card__arrow" aria-hidden="true">↗</span>
         </div>
         <h3 class="project-card__title">${escapeHtml(project.title)}</h3>
         <p class="project-card__desc">${escapeHtml(project.description)}</p>

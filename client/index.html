@@ -3,7 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jordi Xavier</title>
+    <meta
+      name="description"
+      content="Jordi Xavier — full-stack developer building compilers, systems, and web tools from Mallorca."
+    />
+    <meta property="og:title" content="Jordi Xavier" />
+    <meta
+      property="og:description"
+      content="Portfolio, blog, and guestbook. Compilers, systems, and APIs."
+    />
+    <meta property="og:type" content="website" />
+    <title>Jordi Xavier — developer</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23d4623a'/%3E%3Ctext x='16' y='21' font-family='system-ui' font-size='13' font-weight='700' fill='white' text-anchor='middle'%3EJX%3C/text%3E%3C/svg%3E" />
     <script>
       try {
         var t = localStorage.getItem("jx_theme");
@@ -13,17 +24,19 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,wght@1,400;1,500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Outfit:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/src/assets/root.css" />
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <div class="atmosphere-gradient"></div>
     <div class="atmosphere-grid"></div>
+    <div class="atmosphere-noise"></div>
     <custom-cursor-component></custom-cursor-component>
     <site-header-component></site-header-component>
-    <page-component base-path="/"></page-component>
+    <page-component base-path="/" id="main-content"></page-component>
     <site-footer-component></site-footer-component>
     <script type="module" src="/src/main.ts"></script>
   </body>
