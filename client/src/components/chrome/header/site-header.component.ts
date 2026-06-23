@@ -94,8 +94,10 @@ class SiteHeaderComponent extends HTMLElement {
     const id = (event as CustomEvent<{ id: string }>).detail?.id;
     if (!id) return;
 
+    const navId = id === "contact" ? null : id;
+
     this.shadow.querySelectorAll("[data-nav]").forEach((target) => {
-      const active = (target as HTMLElement).dataset.nav === id;
+      const active = navId !== null && (target as HTMLElement).dataset.nav === navId;
       target.classList.toggle("nav__link--active", active);
     });
   }

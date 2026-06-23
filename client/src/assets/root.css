@@ -21,7 +21,6 @@
   --dot-data: #5cb87a;
   --dot-tool: #8a8278;
   --font-sans: "Outfit", system-ui, sans-serif;
-  --font-serif: "Instrument Serif", Georgia, serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
   --container: 1180px;
   --radius-sm: 10px;
@@ -152,6 +151,13 @@ a {
   background-size: 72px 72px;
   mask-image: radial-gradient(ellipse 900px 640px at 48% 18%, #000, transparent 78%);
   -webkit-mask-image: radial-gradient(ellipse 900px 640px at 48% 18%, #000, transparent 78%);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass: var(--bg-elevated);
+    --glass-brd: var(--border);
+  }
 }
 
 .atmosphere-noise {

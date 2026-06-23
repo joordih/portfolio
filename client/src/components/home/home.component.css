@@ -14,7 +14,7 @@
   min-height: 100dvh;
   display: flex;
   align-items: center;
-  padding: clamp(120px, 14vw, 160px) 0 clamp(80px, 10vw, 100px);
+  padding: clamp(88px, 10vw, 96px) 0 clamp(80px, 10vw, 100px);
 }
 
 .section--contact {
@@ -57,16 +57,14 @@
 }
 
 .heading__italic {
-  font-family: var(--font-serif);
   font-style: italic;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--muted);
 }
 
 .heading__accent {
-  font-family: var(--font-serif);
   font-style: italic;
-  font-weight: 400;
+  font-weight: 500;
   color: var(--accent);
 }
 
@@ -90,7 +88,7 @@
   font-size: 11px;
   font-weight: 500;
   color: var(--muted);
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .hero__dot {
@@ -103,8 +101,8 @@
 
 .hero__title {
   margin: 0;
-  font-size: clamp(48px, 10vw, 104px);
-  line-height: 0.9;
+  font-size: clamp(40px, 8vw, 80px);
+  line-height: 0.95;
   letter-spacing: -0.04em;
   font-weight: 700;
   text-wrap: balance;
@@ -125,8 +123,8 @@
 }
 
 .hero__lead-em {
-  font-family: var(--font-serif);
   font-style: italic;
+  font-weight: 500;
   color: var(--text);
 }
 
@@ -372,16 +370,8 @@
 
 .project-card__top {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: flex-start;
-}
-
-.project-card__num {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
 }
 
 .project-card__arrow {

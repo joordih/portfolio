@@ -76,7 +76,6 @@ class HomeComponent extends HTMLElement {
         (project, index) => /* html */ `
       <a href="${escapeHtml(project.url)}" target="_blank" rel="noopener" data-reveal data-hover class="project-card${index === 0 ? " project-card--feature" : ""}">
         <div class="project-card__top">
-          <span class="project-card__num">${escapeHtml(project.numLabel)}</span>
           <span class="project-card__arrow" aria-hidden="true">↗</span>
         </div>
         <h3 class="project-card__title">${escapeHtml(project.title)}</h3>
@@ -129,7 +128,24 @@ class HomeComponent extends HTMLElement {
     this.revealIo?.disconnect();
     this.spyIo?.disconnect();
 
+    this.sectionEls = [...this.shadow.querySelectorAll("section[id]")] as HTMLElement[];
+    this.spyIo = new IntersectionObserver(() => this.updateActiveSection(), {
+      threshold: [0, 0.15, 0.35, 0.5, 0.65, 0.85, 1],
+      rootMargin: "-15% 0px -55% 0px",
+    });
+    this.sectionEls.forEach((section) => this.spyIo!.observe(section));
+    this.updateActiveSection();
+
     const revealTargets = [...this.shadow.querySelectorAll("[data-reveal]")];
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (reduceMotion) {
+      revealTargets.forEach((element) => {
+        (element as HTMLElement).style.opacity = "";
+      });
+      return;
+    }
+
     revealTargets.forEach((element) => {
       if (!(element as HTMLElement).style.animation) {
         (element as HTMLElement).style.opacity = "0";
@@ -150,13 +166,6 @@ class HomeComponent extends HTMLElement {
       { threshold: 0.12 }
     );
     revealTargets.forEach((element) => this.revealIo!.observe(element));
-
-    this.sectionEls = [...this.shadow.querySelectorAll("section[id]")] as HTMLElement[];
-    this.spyIo = new IntersectionObserver(() => this.updateActiveSection(), {
-      threshold: [0, 0.15, 0.35, 0.5, 0.65, 0.85, 1],
-      rootMargin: "-15% 0px -55% 0px",
-    });
-    this.sectionEls.forEach((section) => this.spyIo!.observe(section));
   }
 }
 
