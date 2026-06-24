@@ -1,5 +1,5 @@
 export type Signature = {
-  id: number;
+  id: string;
   login: string;
   avatarUrl: string | null;
   message: string;
@@ -29,7 +29,7 @@ export async function postSignature(message: string): Promise<Signature> {
   return res.json() as Promise<Signature>;
 }
 
-export async function deleteSignature(id: number): Promise<void> {
+export async function deleteSignature(id: string): Promise<void> {
   const res = await fetch(`/api/signatures/${id}`, {
     method: "DELETE",
     credentials: "same-origin",

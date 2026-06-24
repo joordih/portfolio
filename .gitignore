@@ -7,24 +7,16 @@ node_modules/
 
 # Build output
 dist/
-api/_lib/
-scripts/.turso-import.dump.sql
+
+# Swift
+.build/
+.swiftpm/
+Package.resolved
 
 # Environment & secrets
 .env
 .env.*
 !.env.example
-
-# SQLite (local dev; regenerated on deploy)
-*.db
-*.db-journal
-*.db-shm
-*.db-wal
-*.sqlite
-*.sqlite3
-
-# Vercel
-.vercel/
 
 # Logs
 logs/

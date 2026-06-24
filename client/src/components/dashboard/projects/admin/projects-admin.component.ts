@@ -75,7 +75,7 @@ class ProjectsAdminComponent extends HTMLElement {
       button.addEventListener(
         "click",
         () => {
-          this.openEditor(Number((button as HTMLElement).dataset.edit));
+          this.openEditor((button as HTMLElement).dataset.edit);
         },
         { signal }
       );
@@ -87,7 +87,7 @@ class ProjectsAdminComponent extends HTMLElement {
         async () => {
           if (!confirm("Delete this project?")) return;
 
-          await deleteProject(Number((button as HTMLElement).dataset.delete));
+          await deleteProject((button as HTMLElement).dataset.delete ?? "");
           this.closeEditor();
           await this.loadProjects();
         },
@@ -101,7 +101,7 @@ class ProjectsAdminComponent extends HTMLElement {
     this.listAbort = undefined;
   }
 
-  private openEditor(projectId?: number): void {
+  private openEditor(projectId?: string): void {
     const slot = this.shadow.querySelector("[data-editor-slot]");
     if (!slot) return;
 

@@ -1,5 +1,5 @@
 export type PostListItem = {
-  id: number;
+  id: string;
   slug: string;
   title: string;
   excerpt: string | null;
@@ -50,7 +50,7 @@ export async function createPost(data: {
 }
 
 export async function updatePost(
-  id: number,
+  id: string,
   data: {
     title?: string;
     slug?: string;
@@ -71,7 +71,7 @@ export async function updatePost(
   return res.json() as Promise<{ id: number; slug: string }>;
 }
 
-export async function deletePost(id: number): Promise<void> {
+export async function deletePost(id: string): Promise<void> {
   const res = await fetch(`/api/posts/${id}`, {
     method: "DELETE",
     credentials: "same-origin",

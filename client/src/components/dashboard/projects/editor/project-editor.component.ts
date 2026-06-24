@@ -53,7 +53,7 @@ class ProjectEditorComponent extends HTMLElement {
       return;
     }
 
-    const project = await getProject(Number(id));
+    const project = await getProject(id);
     if (!project) return;
 
     if (titleEl) {
@@ -89,7 +89,7 @@ class ProjectEditorComponent extends HTMLElement {
 
     const id = this.getAttribute("project-id");
     if (id) {
-      await updateProject(Number(id), payload);
+      await updateProject(id, payload);
     } else {
       await createProject(payload);
     }

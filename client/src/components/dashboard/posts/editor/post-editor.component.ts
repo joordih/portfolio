@@ -70,7 +70,7 @@ class PostEditorComponent extends HTMLElement {
 
     if (postId) {
       const posts = await getPosts(true);
-      const meta = posts.find((post) => post.id === Number(postId));
+      const meta = posts.find((post) => post.id === postId);
 
       if (meta) {
         const full = await getPost(meta.slug);
@@ -164,7 +164,7 @@ class PostEditorComponent extends HTMLElement {
     const postId = this.getAttribute("post-id");
 
     if (postId) {
-      await updatePost(Number(postId), { title, slug, status, contentHtml, contentJson, dateLabel });
+      await updatePost(postId, { title, slug, status, contentHtml, contentJson, dateLabel });
     } else {
       await createPost({ title, slug, contentHtml, contentJson, status, dateLabel });
     }

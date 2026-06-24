@@ -1,0 +1,6 @@
+.git
+.build
+.swiftpm
+Tests
+.env
+.env.*

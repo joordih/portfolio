@@ -79,7 +79,7 @@ class PostsAdminComponent extends HTMLElement {
       button.addEventListener(
         "click",
         () => {
-          this.openEditor(Number((button as HTMLElement).dataset.edit));
+          this.openEditor((button as HTMLElement).dataset.edit);
         },
         { signal }
       );
@@ -90,7 +90,7 @@ class PostsAdminComponent extends HTMLElement {
         "click",
         async () => {
           const element = button as HTMLElement;
-          const id = Number(element.dataset.toggle);
+          const id = element.dataset.toggle ?? "";
           const nextStatus = element.dataset.status === "published" ? "draft" : "published";
           await updatePost(id, { status: nextStatus });
           await this.loadPosts();
@@ -105,7 +105,7 @@ class PostsAdminComponent extends HTMLElement {
         async () => {
           if (!confirm("Delete this post?")) return;
 
-          await deletePost(Number((button as HTMLElement).dataset.delete));
+          await deletePost((button as HTMLElement).dataset.delete ?? "");
           this.closeEditor();
           await this.loadPosts();
         },
@@ -119,7 +119,7 @@ class PostsAdminComponent extends HTMLElement {
     this.listAbort = undefined;
   }
 
-  private openEditor(postId?: number): void {
+  private openEditor(postId?: string): void {
     const slot = this.shadow.querySelector("[data-editor-slot]");
     if (!slot) return;
 

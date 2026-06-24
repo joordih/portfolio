@@ -11,18 +11,11 @@
     "node": "20.x"
   },
   "scripts": {
-    "dev:api": "npm run dev --prefix server",
+    "dev:api": "docker compose up --build mongo api",
+    "dev:db": "docker compose up mongo",
     "dev:client": "npm run dev --prefix client",
-    "build": "npm run build --prefix server && node scripts/copy-api-lib.mjs && npm run build --prefix client",
-    "build:vercel": "npm run build --prefix server && node scripts/copy-api-lib.mjs && npm run build --prefix client",
-    "typecheck": "npm run typecheck --prefix server && npm run typecheck --prefix client",
-    "install:all": "npm install && npm install --prefix server && npm install --prefix client"
-  },
-  "dependencies": {
-    "@libsql/client": "^0.14.0",
-    "cookie-session": "^2.1.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.4.2",
-    "express": "^5.1.0"
+    "build:client": "npm run build --prefix client",
+    "typecheck": "npm run typecheck --prefix client",
+    "install:all": "npm install && npm install --prefix client"
   }
 }

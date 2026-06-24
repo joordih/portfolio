@@ -1,5 +1,5 @@
 export type Project = {
-  id: number;
+  id: string;
   sortOrder: number;
   numLabel: string;
   title: string;
@@ -16,7 +16,7 @@ export async function getProjects(): Promise<Project[]> {
   return res.json() as Promise<Project[]>;
 }
 
-export async function getProject(id: number): Promise<Project | null> {
+export async function getProject(id: string): Promise<Project | null> {
   const res = await fetch(`/api/projects/${id}`, { credentials: "same-origin" });
   if (!res.ok) return null;
   return res.json() as Promise<Project>;
@@ -41,7 +41,7 @@ export async function createProject(data: {
 }
 
 export async function updateProject(
-  id: number,
+  id: string,
   data: Partial<{
     title: string;
     description: string;
@@ -61,7 +61,7 @@ export async function updateProject(
   return res.json() as Promise<Project>;
 }
 
-export async function deleteProject(id: number): Promise<void> {
+export async function deleteProject(id: string): Promise<void> {
   const res = await fetch(`/api/projects/${id}`, {
     method: "DELETE",
     credentials: "same-origin",

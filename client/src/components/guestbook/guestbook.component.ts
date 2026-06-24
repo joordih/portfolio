@@ -202,7 +202,7 @@ class GuestbookComponent extends HTMLElement {
       button.addEventListener(
         "click",
         async () => {
-          const id = Number((button as HTMLElement).dataset.delete);
+          const id = (button as HTMLElement).dataset.delete ?? "";
           await deleteSignature(id);
           await this.refresh();
         },
