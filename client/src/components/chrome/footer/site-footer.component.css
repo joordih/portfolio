@@ -44,11 +44,16 @@
   .footer {
     grid-template-columns: 1fr;
     text-align: center;
+    padding-bottom: calc(36px + env(safe-area-inset-bottom));
   }
 
   .footer__brand,
   .footer__note {
     justify-self: center;
     text-align: center;
+  }
+
+  .footer__nav {
+    gap: 10px 14px;
   }
 }

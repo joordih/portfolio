@@ -1,0 +1,29 @@
+<div class="activity-admin">
+  <header class="activity-admin__head">
+    <a class="activity-admin__link" href="/activity" target="_blank" rel="noopener">Preview /activity</a>
+  </header>
+
+  <div class="activity-admin__years" data-years></div>
+
+  <form class="activity-admin__add" data-add-form>
+    <label class="activity-admin__label" for="activity-year-input">Add year</label>
+    <div class="activity-admin__add-row">
+      <input
+        id="activity-year-input"
+        class="activity-admin__input"
+        type="number"
+        min="2008"
+        data-year-input
+        placeholder="e.g. 2024"
+      />
+      <button type="submit" class="ghost-btn" data-hover>Add</button>
+    </div>
+  </form>
+
+  <div class="activity-admin__actions">
+    <button type="button" class="ghost-btn" data-reset data-hover>Reset to last 6 years</button>
+    <button type="button" class="github-btn" data-save data-hover>Save years</button>
+  </div>
+
+  <p class="activity-admin__status" data-status hidden></p>
+</div>

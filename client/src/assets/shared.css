@@ -24,6 +24,25 @@ button {
   color: currentColor;
 }
 
+@media (max-width: 640px) {
+  button,
+  .action-btn,
+  .new-btn,
+  .ghost-btn,
+  .github-btn,
+  .submit-btn,
+  .tab,
+  .activity-filter__btn {
+    min-height: 44px;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

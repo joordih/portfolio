@@ -5,7 +5,8 @@ import glassUi from "@/assets/glass-chrome-ui.css?raw";
 import css from "./stack.component.css?raw";
 import html from "./stack.component.html?raw";
 import { GlassChromeOverlay } from "@/lib/glass-chrome/overlay";
-import { getGnavGlassMode, shouldMountGnavGlass } from "@/utils/glass-support";
+import { getSectionGlassMode, shouldMountSectionGlass } from "@/utils/glass-support";
+import { scrollSegmentTabIntoView } from "@/utils/segment-scroll";
 import {
   STACK_FILTERS,
   STACK_LAYERS,
@@ -112,7 +113,9 @@ class StackComponent extends HTMLElement {
         <div class="stack-toolbar">
           <div class="stack-filter jx-glass-root" data-stack-filter>
             <div class="jx-glass__indicator stack-filter__indicator" data-glass-indicator aria-hidden="true"></div>
-            <div class="stack-filter__nav">${filterButtons}</div>
+            <div class="stack-filter__track" data-segment-track>
+              <div class="stack-filter__nav">${filterButtons}</div>
+            </div>
             <div class="stack-filter__active" data-glass-active-clip aria-hidden="true">${mirrors}</div>
             <canvas class="jx-glass__canvas" data-glass-canvas aria-hidden="true" hidden></canvas>
           </div>
@@ -141,7 +144,10 @@ class StackComponent extends HTMLElement {
             mirror.textContent === button.textContent,
           );
         });
-        this.filterGlass?.syncActive();
+        scrollSegmentTabIntoView(button as HTMLElement);
+        requestAnimationFrame(() => {
+          this.filterGlass?.syncActive();
+        });
         this.applyFilter();
       });
     });
@@ -164,7 +170,7 @@ class StackComponent extends HTMLElement {
     this.filterGlass?.destroy();
     this.filterGlass = null;
 
-    if (!shouldMountGnavGlass()) return;
+    if (!shouldMountSectionGlass()) return;
 
     const filter = this.shadow.querySelector<HTMLElement>("[data-stack-filter]");
     if (!filter) return;
@@ -173,7 +179,7 @@ class StackComponent extends HTMLElement {
       this.filterGlass = new GlassChromeOverlay(filter, {
         id: "stack-filter",
         mode: "segmented",
-        enableWebGL: getGnavGlassMode() === "full",
+        enableWebGL: getSectionGlassMode() === "full",
         mountedClass: "stack-filter--glass",
         activeSelector: ".stack-filter__btn--active",
         indicatorHeight: 36,
@@ -181,6 +187,8 @@ class StackComponent extends HTMLElement {
       });
       this.filterGlass.mount();
       this.filterGlass.syncActive();
+      const active = filter.querySelector<HTMLElement>(".stack-filter__btn--active");
+      if (active) scrollSegmentTabIntoView(active);
     } catch (err) {
       console.warn("[stack] filter glass unavailable:", err);
       this.filterGlass = null;
@@ -188,7 +196,7 @@ class StackComponent extends HTMLElement {
   }
 
   private handleResize(): void {
-    if (!shouldMountGnavGlass()) {
+    if (!shouldMountSectionGlass()) {
       this.filterGlass?.destroy();
       this.filterGlass = null;
       return;

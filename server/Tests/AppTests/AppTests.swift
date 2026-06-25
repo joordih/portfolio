@@ -58,4 +58,32 @@ final class AppTests: XCTestCase {
         ]
         XCTAssertEqual(GitHubStatsCalculator.lifetimeCommits(from: days), 5)
     }
+
+    func testContributionCalendarTrimsFutureWeeksForCurrentYear() {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        let today = ContributionCalendar.localDateISO()
+        let weeks = [
+            ContributionCalendar.Week(contributionDays: [
+                .init(date: "\(currentYear)-01-01", contributionCount: 2),
+                .init(date: "\(currentYear)-01-02", contributionCount: 0)
+            ]),
+            ContributionCalendar.Week(contributionDays: [
+                .init(date: today, contributionCount: 4),
+                .init(date: "\(currentYear)-12-31", contributionCount: 9)
+            ]),
+            ContributionCalendar.Week(contributionDays: [
+                .init(date: "\(currentYear)-12-25", contributionCount: 1)
+            ])
+        ]
+
+        let trimmed = ContributionCalendar.trimWeeks(weeks, year: currentYear)
+        XCTAssertEqual(trimmed.count, 2)
+        XCTAssertEqual(trimmed.last?.contributionDays.last?.contributionCount, 0)
+    }
+
+    func testActivityYearsNormalize() {
+        let currentYear = Calendar.current.component(.year, from: Date())
+        let normalized = ActivityYearsSettings.normalize([currentYear, currentYear - 2, 1999, currentYear + 1])
+        XCTAssertEqual(normalized, [currentYear, currentYear - 2])
+    }
 }

@@ -544,22 +544,58 @@
 }
 
 @media (max-width: 820px) {
+  .import__hero,
+  .import__toolbar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .import__panel-head {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
   .repo-list {
     grid-template-columns: 1fr;
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .config {
+    padding-left: 14px;
+    padding-right: 14px;
   }
 
   .config-pager {
     grid-template-columns: 1fr;
     gap: 8px;
+    margin-left: 14px;
+    margin-right: 14px;
   }
 
   .config-pager__label {
     order: -1;
+    text-align: center;
+    word-break: break-all;
   }
 
   .pager-btn {
     justify-content: center;
     width: 100%;
+  }
+
+  .import__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 10px;
+    padding: 16px;
+  }
+
+  .import__actions .ghost-btn,
+  .import__actions .save-btn,
+  .import__actions .github-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 

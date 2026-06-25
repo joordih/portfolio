@@ -7,6 +7,8 @@ struct GitHubController: RouteCollection {
         admin.get("repos", use: listRepos)
         admin.get("repos", "detail", use: repoDetail)
         admin.post("projects", "import", use: importProjects)
+        admin.get("activity", "years", "config", use: activityYearsConfig)
+        admin.put("activity", "years", "config", use: updateActivityYearsConfig)
 
         routes.get("activity", "years", use: activityYears)
         routes.get("activity", use: activity)
@@ -53,6 +55,26 @@ struct GitHubController: RouteCollection {
         return try await service.availableYears()
     }
 
+    func activityYearsConfig(req: Request) async throws -> GitHubActivityYearsConfigDTO {
+        let years = try await req.siteSettingRepository.resolveActivityYears()
+        return GitHubActivityYearsConfigDTO(years: years)
+    }
+
+    func updateActivityYearsConfig(req: Request) async throws -> GitHubActivityYearsConfigDTO {
+        let body = try req.content.decode(GitHubActivityYearsConfigBody.self)
+        guard !body.years.isEmpty else {
+            throw ServiceError.badRequest("At least one valid year is required")
+        }
+
+        let currentYear = Calendar.current.component(.year, from: Date())
+        if let invalid = body.years.first(where: { $0 < ActivityYearsSettings.lifetimeStartYear || $0 > currentYear }) {
+            throw ServiceError.badRequest("Year \(invalid) is out of range (2008–\(currentYear))")
+        }
+
+        let saved = try await req.siteSettingRepository.setActivityYears(body.years)
+        return GitHubActivityYearsConfigDTO(years: saved)
+    }
+
     func activity(req: Request) async throws -> GitHubActivityDTO {
         let year = req.query[Int.self, at: "year"] ?? Calendar.current.component(.year, from: Date())
         let service = try await makeStatsService(req: req)
@@ -74,6 +96,7 @@ struct GitHubController: RouteCollection {
         return GitHubStatsService(
             client: req.client,
             cacheRepository: req.githubStatsCacheRepository,
+            siteSettingRepository: req.siteSettingRepository,
             accessToken: token,
             username: AppConfig.githubUsername()
         )

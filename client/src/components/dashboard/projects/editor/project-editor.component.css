@@ -97,3 +97,20 @@
 .save-btn:hover {
   background: var(--accent-hover);
 }
+
+@media (max-width: 640px) {
+  .form {
+    padding: 16px;
+  }
+
+  .form__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .ghost-btn,
+  .save-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -4,20 +4,20 @@ import Vapor
 struct GitHubStatsService {
     let client: Client
     let cacheRepository: GitHubStatsCacheRepository
+    let siteSettingRepository: SiteSettingRepository
     let accessToken: String
     let username: String
 
     private let cacheTTL = 6 * 60 * 60 * 1000
-    private let lifetimeStartYear = 2008
+    private let activityCacheVersion = "v2"
 
     func availableYears() async throws -> GitHubActivityYearsDTO {
-        let currentYear = Calendar.current.component(.year, from: Date())
-        let years = Array((currentYear - 5)...currentYear).reversed()
-        return GitHubActivityYearsDTO(years: Array(years), username: username)
+        let years = try await siteSettingRepository.resolveActivityYears()
+        return GitHubActivityYearsDTO(years: years, username: username)
     }
 
     func activity(for year: Int) async throws -> GitHubActivityDTO {
-        let cacheKey = "activity:\(username):\(year)"
+        let cacheKey = "activity:\(username):\(year):\(activityCacheVersion)"
         let now = nowMillis()
 
         if
@@ -29,9 +29,8 @@ struct GitHubStatsService {
             return payload
         }
 
-        let from = "\(year)-01-01T00:00:00Z"
-        let to = "\(year + 1)-01-01T00:00:00Z"
-        let yearPayload = try await fetchActivity(year: year, from: from, to: to)
+        let range = ContributionCalendar.activityRange(for: year)
+        let yearPayload = try await fetchActivity(year: year, from: range.from, to: range.to)
         let lifetimeStats = try await fetchLifetimeStats()
         let payload = mergeLifetime(into: yearPayload, lifetime: lifetimeStats)
 
@@ -48,13 +47,9 @@ struct GitHubStatsService {
 
     private func fetchActivity(year: Int, from: String, to: String) async throws -> GitHubActivityDTO {
         let collection = try await fetchCollection(from: from, to: to)
-
-        var days: [GitHubActivityDayDTO] = []
-        for week in collection.contributionCalendar.weeks {
-            for day in week.contributionDays {
-                days.append(GitHubActivityDayDTO(date: day.date, count: day.contributionCount))
-            }
-        }
+        let trimmedWeeks = trimWeeks(collection.contributionCalendar.weeks, year: year)
+        let days = ContributionCalendar.flattenDays(from: trimmedWeeks)
+        let weeks = ContributionCalendar.mapWeeks(trimmedWeeks)
 
         let calculatorDays = days.map { GitHubStatsCalculator.Day(date: $0.date, count: $0.count) }
         let peak = GitHubStatsCalculator.peakDay(from: calculatorDays)
@@ -81,6 +76,7 @@ struct GitHubStatsService {
         return GitHubActivityDTO(
             year: year,
             days: days,
+            weeks: weeks,
             stats: stats,
             topPublicRepos: Array(topPublicRepos)
         )
@@ -103,20 +99,17 @@ struct GitHubStatsService {
         var allDays: [GitHubStatsCalculator.Day] = []
         var lifetimeCommits = 0
 
-        for year in lifetimeStartYear...currentYear {
-            let from = "\(year)-01-01T00:00:00Z"
-            let to = "\(year + 1)-01-01T00:00:00Z"
+        for year in ActivityYearsSettings.lifetimeStartYear...currentYear {
+            let range = ContributionCalendar.activityRange(for: year)
 
-            guard let collection = try await fetchCollectionIfAvailable(from: from, to: to) else {
+            guard let collection = try await fetchCollectionIfAvailable(from: range.from, to: range.to) else {
                 continue
             }
 
             lifetimeCommits += collection.contributionCalendar.totalContributions
-            for week in collection.contributionCalendar.weeks {
-                for day in week.contributionDays {
-                    allDays.append(GitHubStatsCalculator.Day(date: day.date, count: day.contributionCount))
-                }
-            }
+            let trimmedWeeks = trimWeeks(collection.contributionCalendar.weeks, year: year)
+            let days = ContributionCalendar.flattenDays(from: trimmedWeeks)
+            allDays.append(contentsOf: days.map { GitHubStatsCalculator.Day(date: $0.date, count: $0.count) })
         }
 
         let peak = GitHubStatsCalculator.peakDay(from: allDays)
@@ -146,6 +139,7 @@ struct GitHubStatsService {
         GitHubActivityDTO(
             year: yearPayload.year,
             days: yearPayload.days,
+            weeks: yearPayload.weeks,
             stats: GitHubActivityStatsDTO(
                 lifetimeCommits: lifetime.lifetimeCommits,
                 peakCommitsInDay: lifetime.peakCommitsInDay,
@@ -155,6 +149,18 @@ struct GitHubStatsService {
             ),
             topPublicRepos: yearPayload.topPublicRepos
         )
+    }
+
+    private func trimWeeks(
+        _ weeks: [GraphQLResponse.WeekNode],
+        year: Int
+    ) -> [ContributionCalendar.Week] {
+        let mapped = weeks.map { week in
+            ContributionCalendar.Week(contributionDays: week.contributionDays.map {
+                ContributionCalendar.Week.Day(date: $0.date, contributionCount: $0.contributionCount)
+            })
+        }
+        return ContributionCalendar.trimWeeks(mapped, year: year)
     }
 
     private func fetchCollectionIfAvailable(from: String, to: String) async throws -> GraphQLResponse.CollectionNode? {

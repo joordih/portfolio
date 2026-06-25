@@ -28,12 +28,31 @@ function hasWebGL(): boolean {
   return Boolean(canvas.getContext("webgl"));
 }
 
+function isNarrowViewport(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < 820;
+}
+
+function isLowPowerDevice(): boolean {
+  const cores = navigator.hardwareConcurrency ?? 8;
+  return cores < 4;
+}
+
 export function getGnavGlassMode(): GnavGlassMode {
   if (typeof window === "undefined") return "off";
-  if (window.innerWidth < 820) return "off";
+  if (isNarrowViewport()) return "off";
+  if (isLowPowerDevice()) return "off";
 
-  const cores = navigator.hardwareConcurrency ?? 8;
-  if (cores < 4) return "off";
+  if (prefersReducedTransparency() && !isForceGlassEnabled()) return "css-only";
+  if (!hasWebGL()) return "css-only";
+  return "full";
+}
+
+/** In-page segmented controls (stack, activity, dashboard nav). Desktop only — mobile uses CSS fallback. */
+export function getSectionGlassMode(): GnavGlassMode {
+  if (typeof window === "undefined") return "off";
+  if (isNarrowViewport()) return "off";
+  if (isLowPowerDevice()) return "off";
 
   if (prefersReducedTransparency() && !isForceGlassEnabled()) return "css-only";
   if (!hasWebGL()) return "css-only";
@@ -59,4 +78,8 @@ export function getGnavGlassState(): GnavGlassState {
 
 export function shouldMountGnavGlass(): boolean {
   return getGnavGlassMode() !== "off";
+}
+
+export function shouldMountSectionGlass(): boolean {
+  return getSectionGlassMode() !== "off";
 }

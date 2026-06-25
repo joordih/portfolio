@@ -208,3 +208,29 @@
 .save-btn:hover {
   background: var(--accent-hover);
 }
+
+@media (max-width: 640px) {
+  .wrap {
+    padding: 0;
+  }
+
+  .fields {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .cancel-btn,
+  .save-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

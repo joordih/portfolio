@@ -490,6 +490,11 @@
 }
 
 @media (max-width: 640px) {
+  .section--hero {
+    min-height: auto;
+    padding-top: var(--header-offset);
+  }
+
   .hero__actions {
     flex-direction: column;
     align-items: stretch;
@@ -498,5 +503,19 @@
   .btn-primary,
   .btn-ghost {
     justify-content: center;
+  }
+
+  .project-card--feature {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .about__card {
+    padding: 18px 16px;
+  }
+
+  .contact-card {
+    padding: 18px 16px;
   }
 }

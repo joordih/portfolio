@@ -9,22 +9,27 @@
 
 <div class="gnav-pill jx-glass-root" data-more-root>
   <div class="jx-glass__indicator gnav-pill__indicator" data-glass-indicator aria-hidden="true"></div>
-  <nav class="gnav-nav" data-gnav-nav aria-label="Main">
-    <a href="/" data-nav="home" data-scroll="home" data-hover class="gnav-nav__link gnav-nav__link--active">Home</a>
-    <a href="/" data-nav="about" data-scroll="about" data-hover class="gnav-nav__link">About</a>
-    <a href="/" data-nav="projects" data-scroll="projects" data-hover class="gnav-nav__link">Projects</a>
-    <button type="button" class="gnav-more" data-nav="more" data-more-toggle data-hover>
-      More
-      <span class="gnav-caret" data-caret data-icon="caret-down" data-icon-size="12"></span>
-    </button>
-    <a href="/dashboard" data-nav="dashboard" data-dashboard-link data-hover class="gnav-nav__link gnav-nav__link--dashboard">Dashboard</a>
-  </nav>
-  <div class="gnav-nav gnav-nav--active-layer" data-glass-active-clip aria-hidden="true">
-    <span class="gnav-nav__mirror">Home</span>
-    <span class="gnav-nav__mirror">About</span>
-    <span class="gnav-nav__mirror">Projects</span>
-    <span class="gnav-nav__mirror gnav-nav__mirror--more">More</span>
-    <span class="gnav-nav__mirror gnav-nav__mirror--dashboard">Dashboard</span>
+  <div class="gnav-pill__track" data-gnav-scroll>
+    <nav class="gnav-nav" data-gnav-nav aria-label="Main">
+      <a href="/" data-nav="home" data-scroll="home" data-hover class="gnav-nav__link gnav-nav__link--active">Home</a>
+      <a href="/" data-nav="about" data-scroll="about" data-hover class="gnav-nav__link">About</a>
+      <a href="/" data-nav="projects" data-scroll="projects" data-hover class="gnav-nav__link">Projects</a>
+      <button type="button" class="gnav-more" data-nav="more" data-more-toggle data-hover>
+        More
+        <span class="gnav-caret" data-caret data-icon="caret-down" data-icon-size="12"></span>
+      </button>
+      <a href="/dashboard" data-nav="dashboard" data-dashboard-link data-hover class="gnav-nav__link gnav-nav__link--dashboard">Dashboard</a>
+    </nav>
+    <div class="gnav-nav gnav-nav--active-layer" data-glass-active-clip aria-hidden="true">
+      <span class="gnav-nav__mirror">Home</span>
+      <span class="gnav-nav__mirror">About</span>
+      <span class="gnav-nav__mirror">Projects</span>
+      <span class="gnav-nav__mirror gnav-nav__mirror--more">
+        More
+        <span class="gnav-caret" data-icon="caret-down" data-icon-size="12"></span>
+      </span>
+      <span class="gnav-nav__mirror gnav-nav__mirror--dashboard">Dashboard</span>
+    </div>
   </div>
   <canvas class="jx-glass__canvas gnav-pill__gl" data-glass-canvas aria-hidden="true" hidden></canvas>
 </div>

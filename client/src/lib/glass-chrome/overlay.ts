@@ -164,46 +164,23 @@ export class GlassChromeOverlay {
     this.syncFocus();
   }
 
-  private getVisibleChildren(container: HTMLElement): HTMLElement[] {
-    return Array.from(container.children).filter((child): child is HTMLElement => {
-      if (!(child instanceof HTMLElement)) return false;
-      return getComputedStyle(child).display !== "none";
-    });
-  }
+  private clampSegmentBox(
+    centerX: number,
+    centerY: number,
+    width: number,
+    height: number,
+  ): { left: number; top: number } {
+    const surfaceW = Math.max(this.surfaceWidth, 1);
+    const surfaceH = Math.max(this.surfaceHeight, 1);
+    let left = centerX - width / 2;
+    let top = centerY - height / 2;
 
-  private syncMirrorAlignment(): void {
-    if (!this.activeClip || this.options.mode !== "segmented") return;
+    if (left + width > surfaceW) left = surfaceW - width;
+    if (left < 0) left = 0;
+    if (top + height > surfaceH) top = surfaceH - height;
+    if (top < 0) top = 0;
 
-    const navLayer = this.activeClip.previousElementSibling;
-    if (!(navLayer instanceof HTMLElement)) return;
-
-    const rootRect = this.root.getBoundingClientRect();
-    const segments = this.getVisibleChildren(navLayer);
-    const mirrors = this.getVisibleChildren(this.activeClip);
-    const count = Math.min(segments.length, mirrors.length);
-
-    for (let i = 0; i < count; i++) {
-      const segment = segments[i];
-      const mirror = mirrors[i];
-      const segRect = segment.getBoundingClientRect();
-
-      mirror.style.visibility = "visible";
-      mirror.style.position = "absolute";
-      mirror.style.left = `${segRect.left - rootRect.left}px`;
-      mirror.style.top = `${segRect.top - rootRect.top}px`;
-      mirror.style.width = `${segRect.width}px`;
-      mirror.style.height = `${segRect.height}px`;
-      mirror.style.margin = "0";
-      mirror.style.padding = "0";
-      mirror.style.display = "flex";
-      mirror.style.alignItems = "center";
-      mirror.style.justifyContent = "center";
-      mirror.style.boxSizing = "border-box";
-    }
-
-    for (let i = count; i < mirrors.length; i++) {
-      mirrors[i].style.visibility = "hidden";
-    }
+    return { left, top };
   }
 
   private syncFocus(): void {
@@ -215,10 +192,10 @@ export class GlassChromeOverlay {
 
       const rootRect = this.root.getBoundingClientRect();
       const activeRect = active.getBoundingClientRect();
-      const x = activeRect.left - rootRect.left + activeRect.width / 2;
-      const y = activeRect.top - rootRect.top + activeRect.height / 2;
       const w = activeRect.width + paddingX * 2;
       const h = activeRect.height;
+      const x = activeRect.left - rootRect.left + activeRect.width / 2;
+      const y = activeRect.top - rootRect.top + activeRect.height / 2;
 
       this.springX.target = x;
       this.springY.target = y;
@@ -233,8 +210,6 @@ export class GlassChromeOverlay {
         this.springH.current = h;
         this.initialized = true;
       }
-
-      this.syncMirrorAlignment();
       return;
     }
 
@@ -333,21 +308,18 @@ export class GlassChromeOverlay {
       if (this.indicator && this.options.mode === "segmented") {
         const effW = this.springW.current * morphScaleX;
         const effH = indicatorH * morphScaleY;
-        const left = this.springX.current - effW / 2;
-        const top = this.springY.current - effH / 2;
+        const box = this.clampSegmentBox(this.springX.current, this.springY.current, effW, effH);
 
-        this.indicator.style.transform = `translate(${left}px, ${top}px) scaleX(${morphScaleX}) scaleY(${morphScaleY}) skewX(${morphSkewDeg}deg)`;
+        this.indicator.style.transform = `translate(${box.left}px, ${box.top}px) scaleX(${morphScaleX}) scaleY(${morphScaleY}) skewX(${morphSkewDeg}deg)`;
         this.indicator.style.width = `${this.springW.current}px`;
         this.indicator.style.height = `${indicatorH}px`;
         this.indicator.style.opacity = String(open);
 
         if (this.activeClip) {
-          const effLeft = this.springX.current - effW / 2;
-          const effTop = this.springY.current - effH / 2;
-          const effRight = this.surfaceWidth - effLeft - effW;
-          const effBottom = this.surfaceHeight - effTop - effH;
+          const effRight = Math.max(0, this.surfaceWidth - box.left - effW);
+          const effBottom = Math.max(0, this.surfaceHeight - box.top - effH);
           const effRadius = Math.min(effW, effH) / 2;
-          this.activeClip.style.clipPath = `inset(${effTop}px ${effRight}px ${effBottom}px ${effLeft}px round ${effRadius}px)`;
+          this.activeClip.style.clipPath = `inset(${box.top}px ${effRight}px ${effBottom}px ${box.left}px round ${effRadius}px)`;
         }
       } else if (this.indicator && this.options.mode === "sheet") {
         const effW = this.springW.current * (1 + bulge * 0.04);

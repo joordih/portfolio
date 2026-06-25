@@ -20,4 +20,8 @@ extension Request {
     var githubStatsCacheRepository: GitHubStatsCacheRepository {
         FluentGitHubStatsCacheRepository(database: db)
     }
+
+    var siteSettingRepository: SiteSettingRepository {
+        FluentSiteSettingRepository(database: db)
+    }
 }

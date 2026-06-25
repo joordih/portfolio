@@ -30,6 +30,13 @@
   --z-dropdown: 130;
   --z-cursor: 200;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --header-offset: clamp(110px, 12vw, 140px);
+}
+
+@media (max-width: 820px) {
+  :root {
+    --header-offset: calc(148px + env(safe-area-inset-top, 0px));
+  }
 }
 
 :root[data-theme="light"] {
@@ -70,6 +77,16 @@ body {
   -webkit-font-smoothing: antialiased;
   transition: background 0.45s var(--ease-out), color 0.45s var(--ease-out);
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+@media (max-width: 640px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
 }
 
 ::selection {
@@ -170,4 +187,8 @@ a {
   opacity: 0.04;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size: 180px 180px;
+}
+
+html[data-page="dashboard"] site-footer-component {
+  display: none;
 }

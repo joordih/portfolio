@@ -7,7 +7,8 @@ import css from "./activity.component.css?raw";
 import html from "./activity.component.html?raw";
 import { getActivity, getActivityYears, type GitHubActivity } from "@/data/github/activity";
 import { GlassChromeOverlay } from "@/lib/glass-chrome/overlay";
-import { getGnavGlassMode, shouldMountGnavGlass } from "@/utils/glass-support";
+import { getSectionGlassMode, shouldMountSectionGlass } from "@/utils/glass-support";
+import { scrollSegmentTabIntoView } from "@/utils/segment-scroll";
 
 const WEEKDAY_LABELS = ["Mon", "Wed", "Fri"] as const;
 const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -53,7 +54,7 @@ class ActivityComponent extends HTMLElement {
     const yearsPayload = await getActivityYears();
 
     if (!yearsPayload || yearsPayload.years.length === 0) {
-      root.innerHTML = `<div class="activity-page"><p class="empty">GitHub activity is not available yet. Connect GitHub from the dashboard or configure GITHUB_USERNAME and GITHUB_STATS_TOKEN on the server.</p></div>`;
+      root.innerHTML = `<div class="activity-page"><p class="empty">No GitHub data yet. Connect your account from the dashboard, or set GITHUB_USERNAME and GITHUB_STATS_TOKEN on the server.</p></div>`;
       return;
     }
 
@@ -70,7 +71,7 @@ class ActivityComponent extends HTMLElement {
           <div class="activity-skeleton__hero" aria-hidden="true"></div>
           <div class="activity-skeleton__block" aria-hidden="true"></div>
         </div>
-        <p class="loading">Loading GitHub activity...</p>
+        <p class="loading">Loading activity...</p>
       </div>`;
   }
 
@@ -81,13 +82,13 @@ class ActivityComponent extends HTMLElement {
           <div class="activity-skeleton__hero" aria-hidden="true"></div>
           <div class="activity-skeleton__block" aria-hidden="true"></div>
         </div>
-        <p class="loading">Loading contribution data...</p>
+        <p class="loading">Loading ${this.year}...</p>
       </div>`;
 
     const activity = await getActivity(this.year);
 
     if (!activity) {
-      root.innerHTML = `<div class="activity-page"><p class="empty">Could not load activity for ${this.year}.</p></div>`;
+      root.innerHTML = `<div class="activity-page"><p class="empty">Could not load ${this.year}. Try another year.</p></div>`;
       return;
     }
 
@@ -97,15 +98,17 @@ class ActivityComponent extends HTMLElement {
 
     const profileUrl = `https://github.com/${encodeURIComponent(this.username)}`;
     const yearCommits = activity.stats.yearCommits.toLocaleString();
+    const isCurrentYear = this.year === new Date().getFullYear();
+    const yearLabel = isCurrentYear ? `${this.year} so far` : String(this.year);
 
     root.innerHTML = /* html */ `
       <div class="activity-page">
         <header class="activity-hero">
           <div class="activity-hero__copy">
-            <p class="activity-hero__meta">@${escapeHtml(this.username)} · ${yearCommits} commits in ${this.year}</p>
+            <p class="activity-hero__meta">@${escapeHtml(this.username)} · ${yearCommits} commits in ${yearLabel}</p>
             <h1 class="activity-hero__title">Coding <span class="activity-hero__emph">rhythm</span></h1>
             <p class="activity-hero__lead">
-              Contribution history pulled from public GitHub data. Pick a year to see where the commits landed.
+              Side projects, bug fixes, and late-night pushes. The orange squares are the honest version.
             </p>
           </div>
           <a class="activity-hero__link" href="${escapeHtml(profileUrl)}" target="_blank" rel="noopener">
@@ -118,13 +121,15 @@ class ActivityComponent extends HTMLElement {
         <div class="activity-toolbar">
           <div class="activity-filter jx-glass-root" data-glass-tabs>
             <div class="jx-glass__indicator activity-filter__indicator" data-glass-indicator aria-hidden="true"></div>
-            <div class="activity-filter__nav">
-              ${this.years
-                .map(
-                  (item) =>
-                    `<button type="button" class="activity-filter__btn${item === this.year ? " activity-filter__btn--active" : ""}" data-year="${item}">${item}</button>`
-                )
-                .join("")}
+            <div class="activity-filter__track" data-segment-track>
+              <div class="activity-filter__nav">
+                ${this.years
+                  .map(
+                    (item) =>
+                      `<button type="button" class="activity-filter__btn${item === this.year ? " activity-filter__btn--active" : ""}" data-year="${item}">${item}</button>`
+                  )
+                  .join("")}
+              </div>
             </div>
             <div class="activity-filter__active" data-glass-active-clip aria-hidden="true">
               ${this.years
@@ -162,7 +167,7 @@ class ActivityComponent extends HTMLElement {
           <article class="activity-layer activity-layer--repos">
             <div class="activity-layer__body">
               <header class="activity-layer__head">
-                <h2 class="activity-layer__title">Top repositories</h2>
+                <h2 class="activity-layer__title">Repos by commits</h2>
                 <span class="activity-layer__aside">public · ${this.year}</span>
               </header>
               ${this.renderTopRepos(activity)}
@@ -173,35 +178,41 @@ class ActivityComponent extends HTMLElement {
 
     this.setupShellEventListeners(root);
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => this.initTabsGlass(root));
+      requestAnimationFrame(() => {
+        this.initTabsGlass(root);
+        const activeYear = root.querySelector<HTMLElement>(".activity-filter__btn--active");
+        if (activeYear) scrollSegmentTabIntoView(activeYear);
+        this.tabsGlass?.syncActive();
+        this.scrollHeatmapToEnd(root);
+      });
     });
   }
 
   private renderStats(activity: GitHubActivity): string {
-    const peakMeta = activity.stats.peakDay
-      ? this.formatShortDate(activity.stats.peakDay)
-      : "no peak recorded";
+    const yearPeak = this.peakDayForYear(activity.days);
+    const peakMeta = yearPeak.date ? this.formatShortDate(yearPeak.date) : "none logged";
+    const isCurrentYear = this.year === new Date().getFullYear();
 
     const items = [
       {
         value: activity.stats.lifetimeCommits.toLocaleString(),
-        label: "Lifetime commits",
-        meta: "all tracked years",
+        label: "All-time commits",
+        meta: "loaded years",
       },
       {
         value: activity.stats.yearCommits.toLocaleString(),
         label: `Commits in ${this.year}`,
-        meta: "selected year",
+        meta: isCurrentYear ? "year to date" : String(this.year),
       },
       {
-        value: activity.stats.peakCommitsInDay.toLocaleString(),
-        label: "Peak day",
+        value: yearPeak.count.toLocaleString(),
+        label: "Busiest day",
         meta: peakMeta,
       },
       {
         value: activity.stats.longestStreak.toLocaleString(),
         label: "Longest streak",
-        meta: "consecutive days",
+        meta: "days in a row",
       },
     ];
 
@@ -221,9 +232,9 @@ class ActivityComponent extends HTMLElement {
   }
 
   private renderHeatmap(activity: GitHubActivity): string {
-    const weeks = this.groupByWeek(activity.days);
+    const weeks = this.resolveHeatmapWeeks(activity);
     if (weeks.length === 0) {
-      return `<p class="empty">No contribution data for this year.</p>`;
+      return `<p class="empty">Nothing logged for ${this.year}.</p>`;
     }
 
     const max = Math.max(...activity.days.map((day) => day.count), 1);
@@ -257,10 +268,12 @@ class ActivityComponent extends HTMLElement {
 
     return /* html */ `
       <div class="heatmap-panel" style="--week-count: ${weeks.length}">
-        <div class="heatmap-months" aria-hidden="true">${monthLabels}</div>
-        <div class="heatmap-core">
-          <div class="heatmap-days" aria-hidden="true">${weekdayLabels}</div>
-          <div class="heatmap" role="img" aria-label="Contribution heatmap for ${this.year}">${weekCells}</div>
+        <div class="heatmap-scroll" data-heatmap-scroll>
+          <div class="heatmap-months" aria-hidden="true">${monthLabels}</div>
+          <div class="heatmap-core">
+            <div class="heatmap-days" aria-hidden="true">${weekdayLabels}</div>
+            <div class="heatmap" role="img" aria-label="Contribution heatmap for ${this.year}">${weekCells}</div>
+          </div>
         </div>
         <div class="heatmap-legend">
           <span>Less</span>
@@ -295,6 +308,65 @@ class ActivityComponent extends HTMLElement {
     return labels.join("");
   }
 
+  private peakDayForYear(days: GitHubActivity["days"]): { count: number; date: string | null } {
+    const active = days.filter((day) => day.count > 0);
+    if (active.length === 0) return { count: 0, date: null };
+    const best = active.reduce((peak, day) => (day.count > peak.count ? day : peak));
+    return { count: best.count, date: best.date };
+  }
+
+  private scrollHeatmapToEnd(root: Element): void {
+    if (this.year !== new Date().getFullYear()) return;
+    const scroll = root.querySelector<HTMLElement>("[data-heatmap-scroll]");
+    if (!scroll) return;
+    scroll.scrollLeft = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
+  }
+
+  private resolveHeatmapWeeks(activity: GitHubActivity): Array<Array<{ date: string; count: number }>> {
+    if (activity.weeks?.length) {
+      return activity.weeks.map((week) => week.days);
+    }
+    return this.trimWeeksForCurrentYear(this.groupByWeek(activity.days), this.year);
+  }
+
+  private trimWeeksForCurrentYear(
+    weeks: Array<Array<{ date: string; count: number }>>,
+    year: number
+  ): Array<Array<{ date: string; count: number }>> {
+    const currentYear = new Date().getFullYear();
+    if (year !== currentYear) return weeks;
+
+    const today = this.localDateISO();
+    let endIndex = -1;
+
+    for (let index = 0; index < weeks.length; index++) {
+      const week = weeks[index];
+      if (week.some((day) => day.date && day.date <= today)) {
+        endIndex = index;
+      }
+      if (week.some((day) => day.date === today)) {
+        endIndex = index;
+        break;
+      }
+    }
+
+    if (endIndex < 0) return [];
+
+    return weeks.slice(0, endIndex + 1).map((week) =>
+      week.map((day) => ({
+        date: day.date,
+        count: day.date && day.date > today ? 0 : day.count,
+      }))
+    );
+  }
+
+  private localDateISO(date = new Date()): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
   private groupByWeek(days: GitHubActivity["days"]): Array<Array<{ date: string; count: number }>> {
     const sorted = [...days].sort((a, b) => a.date.localeCompare(b.date));
     const weeks: Array<Array<{ date: string; count: number }>> = [];
@@ -322,7 +394,7 @@ class ActivityComponent extends HTMLElement {
 
   private renderTopRepos(activity: GitHubActivity): string {
     if (activity.topPublicRepos.length === 0) {
-      return `<p class="empty">No public repository activity for this year.</p>`;
+      return `<p class="empty">No public repo commits in ${this.year}.</p>`;
     }
 
     return /* html */ `
@@ -360,7 +432,13 @@ class ActivityComponent extends HTMLElement {
         "click",
         () => {
           this.year = Number((button as HTMLElement).dataset.year);
-          void this.renderActivity(root);
+          void this.renderActivity(root).then(() => {
+            const active = root.querySelector<HTMLElement>(".activity-filter__btn--active");
+            if (active) {
+              scrollSegmentTabIntoView(active);
+              requestAnimationFrame(() => this.tabsGlass?.syncActive());
+            }
+          });
         },
         { signal }
       );
@@ -370,7 +448,7 @@ class ActivityComponent extends HTMLElement {
   private initTabsGlass(root: Element): void {
     this.tabsGlass?.destroy();
     this.tabsGlass = null;
-    if (!shouldMountGnavGlass()) return;
+    if (!shouldMountSectionGlass()) return;
 
     const tabsPill = root.querySelector<HTMLElement>("[data-glass-tabs]");
     if (!tabsPill) return;
@@ -379,20 +457,24 @@ class ActivityComponent extends HTMLElement {
       this.tabsGlass = new GlassChromeOverlay(tabsPill, {
         id: "activity-tabs",
         mode: "segmented",
-        enableWebGL: getGnavGlassMode() === "full",
+        enableWebGL: getSectionGlassMode() === "full",
         mountedClass: "activity-filter--glass",
         activeSelector: ".activity-filter__btn--active",
         indicatorHeight: 36,
+        paddingX: 2,
       });
       this.tabsGlass.mount();
       this.tabsGlass.syncActive();
+      const active = tabsPill.querySelector<HTMLElement>(".activity-filter__btn--active");
+      if (active) scrollSegmentTabIntoView(active);
+      requestAnimationFrame(() => this.tabsGlass?.syncActive());
     } catch {
       this.tabsGlass = null;
     }
   }
 
   private handleResize(): void {
-    if (!shouldMountGnavGlass()) {
+    if (!shouldMountSectionGlass()) {
       this.tabsGlass?.destroy();
       this.tabsGlass = null;
       return;

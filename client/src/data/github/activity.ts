@@ -3,6 +3,10 @@ export type GitHubActivityDay = {
   count: number;
 };
 
+export type GitHubActivityWeek = {
+  days: GitHubActivityDay[];
+};
+
 export type GitHubActivityStats = {
   lifetimeCommits: number;
   peakCommitsInDay: number;
@@ -20,6 +24,7 @@ export type GitHubTopRepo = {
 export type GitHubActivity = {
   year: number;
   days: GitHubActivityDay[];
+  weeks?: GitHubActivityWeek[];
   stats: GitHubActivityStats;
   topPublicRepos: GitHubTopRepo[];
 };
@@ -39,4 +44,23 @@ export async function getActivity(year: number): Promise<GitHubActivity | null> 
   const res = await fetch(`/api/github/activity?year=${year}`, { credentials: "same-origin" });
   if (!res.ok) return null;
   return res.json() as Promise<GitHubActivity>;
+}
+
+export async function getActivityYearsConfig(): Promise<number[] | null> {
+  const res = await fetch("/api/github/activity/years/config", { credentials: "same-origin" });
+  if (!res.ok) return null;
+  const payload = (await res.json()) as { years?: number[] };
+  return Array.isArray(payload.years) ? payload.years : null;
+}
+
+export async function saveActivityYearsConfig(years: number[]): Promise<number[] | null> {
+  const res = await fetch("/api/github/activity/years/config", {
+    method: "PUT",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ years }),
+  });
+  if (!res.ok) return null;
+  const payload = (await res.json()) as { years?: number[] };
+  return Array.isArray(payload.years) ? payload.years : null;
 }

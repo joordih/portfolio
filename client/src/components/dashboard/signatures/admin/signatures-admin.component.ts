@@ -1,22 +1,23 @@
 import { adoptStyles } from "@/utils/styles";
 import { escapeHtml } from "@/utils/html";
 import shared from "@/assets/shared.css?raw";
-import css from "./signatures-admin.component.css?raw";
+import dashboardCss from "../../dashboard.component.css?raw";
 import html from "./signatures-admin.component.html?raw";
 import { getSignatures, deleteSignature, ago } from "@/data/signatures";
 
 class SignaturesAdminComponent extends HTMLElement {
   private shadow: ShadowRoot;
   private listAbort?: AbortController;
+  private loadToken = 0;
 
   constructor() {
     super();
     this.shadow = this.attachShadow({ mode: "open" });
-    this.loadStyles();
+    adoptStyles(this.shadow, shared, dashboardCss);
   }
 
   connectedCallback(): void {
-    this.render();
+    this.shadow.innerHTML = html;
     void this.loadSignatures();
   }
 
@@ -24,28 +25,49 @@ class SignaturesAdminComponent extends HTMLElement {
     this.disconnectListEventListeners();
   }
 
-  private loadStyles(): void {
-    adoptStyles(this.shadow, shared, css);
-  }
-
-  private render(): void {
-    this.shadow.innerHTML = html;
+  private renderSkeletonRows(count = 3): string {
+    return Array.from({ length: count }, () => /* html */ `
+      <tr class="admin-skeleton-row" aria-hidden="true">
+        <td class="td td--user"><span class="admin-skeleton admin-skeleton--short"></span></td>
+        <td class="td td--msg"><span class="admin-skeleton admin-skeleton--mid"></span></td>
+        <td class="td td--time"><span class="admin-skeleton admin-skeleton--short"></span></td>
+        <td class="td td--actions"><span class="admin-skeleton admin-skeleton--short"></span></td>
+      </tr>`).join("");
   }
 
   private async loadSignatures(): Promise<void> {
-    const signatures = await getSignatures();
     const body = this.shadow.querySelector("[data-body]");
-    if (!body) return;
+    const tableWrap = this.shadow.querySelector<HTMLElement>("[data-table-wrap]");
+    const empty = this.shadow.querySelector<HTMLElement>("[data-empty]");
+    if (!body || !tableWrap || !empty) return;
 
+    const token = ++this.loadToken;
+
+    tableWrap.hidden = false;
+    empty.hidden = true;
+    body.innerHTML = this.renderSkeletonRows();
+
+    const signatures = await getSignatures();
+    if (!this.isConnected || token !== this.loadToken) return;
+
+    if (signatures.length === 0) {
+      body.innerHTML = "";
+      tableWrap.hidden = true;
+      empty.hidden = false;
+      return;
+    }
+
+    tableWrap.hidden = false;
+    empty.hidden = true;
     body.innerHTML = signatures
       .map(
         (signature) => /* html */ `
       <tr>
-        <td class="td td--user">@${signature.login}</td>
+        <td class="td td--user">@${escapeHtml(signature.login)}</td>
         <td class="td td--msg">${escapeHtml(signature.message)}</td>
         <td class="td td--time">${ago(signature.createdAt)}</td>
-        <td class="td"><button type="button" class="delete-btn" data-delete="${signature.id}">Delete</button></td>
-      </tr>`
+        <td class="td td--actions"><button type="button" class="delete-btn" data-delete="${signature.id}">Delete</button></td>
+      </tr>`,
       )
       .join("");
 
@@ -61,11 +83,11 @@ class SignaturesAdminComponent extends HTMLElement {
       button.addEventListener(
         "click",
         async () => {
-          const id = (button as HTMLElement).dataset.delete ?? "";
+          const id = Number((button as HTMLElement).dataset.delete);
           await deleteSignature(id);
           await this.loadSignatures();
         },
-        { signal }
+        { signal },
       );
     });
   }

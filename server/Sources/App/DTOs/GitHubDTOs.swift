@@ -62,9 +62,14 @@ struct GitHubActivityStatsDTO: Content {
     let yearCommits: Int
 }
 
+struct GitHubActivityWeekDTO: Content {
+    let days: [GitHubActivityDayDTO]
+}
+
 struct GitHubActivityDTO: Content {
     let year: Int
     let days: [GitHubActivityDayDTO]
+    let weeks: [GitHubActivityWeekDTO]
     let stats: GitHubActivityStatsDTO
     let topPublicRepos: [GitHubTopRepoDTO]
 }
@@ -72,4 +77,12 @@ struct GitHubActivityDTO: Content {
 struct GitHubActivityYearsDTO: Content {
     let years: [Int]
     let username: String
+}
+
+struct GitHubActivityYearsConfigDTO: Content {
+    let years: [Int]
+}
+
+struct GitHubActivityYearsConfigBody: Content {
+    let years: [Int]
 }
