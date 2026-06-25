@@ -11,9 +11,11 @@ class CustomCursorComponent extends HTMLElement {
   private my = 0;
   private rx = 0;
   private ry = 0;
+  private active = false;
   private readonly onMove: (event: MouseEvent) => void;
   private readonly onOver: (event: MouseEvent) => void;
   private readonly onOut: (event: MouseEvent) => void;
+  private readonly onRoute: (event: Event) => void;
   private readonly onLoop: () => void;
 
   constructor() {
@@ -22,17 +24,20 @@ class CustomCursorComponent extends HTMLElement {
     this.onMove = (event: MouseEvent) => this.handleMove(event);
     this.onOver = (event: MouseEvent) => this.handleOver(event);
     this.onOut = (event: MouseEvent) => this.handleOut(event);
+    this.onRoute = () => this.syncRoute();
     this.onLoop = () => this.tick();
     this.loadStyles();
   }
 
   connectedCallback(): void {
     this.render();
-    this.setupEventListeners();
+    document.addEventListener("portfolio:route", this.onRoute);
+    this.syncRoute();
   }
 
   disconnectedCallback(): void {
-    this.disconnectEventListeners();
+    this.disable();
+    document.removeEventListener("portfolio:route", this.onRoute);
   }
 
   private loadStyles(): void {
@@ -45,11 +50,20 @@ class CustomCursorComponent extends HTMLElement {
     this.ring = this.shadow.querySelector(".ring") as HTMLElement;
   }
 
-  private setupEventListeners(): void {
-    if (!window.matchMedia?.("(pointer:fine)").matches || !this.dot || !this.ring) {
+  private syncRoute(): void {
+    if (location.pathname === "/dashboard") {
+      this.disable();
+      return;
+    }
+    this.enable();
+  }
+
+  private enable(): void {
+    if (this.active || !window.matchMedia?.("(pointer:fine)").matches || !this.dot || !this.ring) {
       return;
     }
 
+    this.active = true;
     document.body.style.cursor = "none";
     this.dot.style.opacity = "1";
     this.ring.style.opacity = "1";
@@ -64,12 +78,23 @@ class CustomCursorComponent extends HTMLElement {
     this.raf = requestAnimationFrame(this.onLoop);
   }
 
-  private disconnectEventListeners(): void {
+  private disable(): void {
+    if (!this.active) {
+      document.body.style.cursor = "";
+      if (this.dot) this.dot.style.opacity = "0";
+      if (this.ring) this.ring.style.opacity = "0";
+      return;
+    }
+
+    this.active = false;
     cancelAnimationFrame(this.raf);
     window.removeEventListener("mousemove", this.onMove);
     document.removeEventListener("mouseover", this.onOver);
     document.removeEventListener("mouseout", this.onOut);
     document.body.style.cursor = "";
+
+    if (this.dot) this.dot.style.opacity = "0";
+    if (this.ring) this.ring.style.opacity = "0";
   }
 
   private handleMove(event: MouseEvent): void {
@@ -106,7 +131,7 @@ class CustomCursorComponent extends HTMLElement {
 
   private isInteractive(event: MouseEvent): boolean {
     return event.composedPath().some(
-      (node) => node instanceof Element && node.matches?.("a,button,[data-hover],input,textarea")
+      (node) => node instanceof Element && node.matches?.("a,button,[data-hover],input,textarea"),
     );
   }
 

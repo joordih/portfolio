@@ -5,8 +5,13 @@ import {
   insertProject,
   updateProject,
   deleteProject,
+  countProjects,
+  displayProjectDescription,
+  type ProjectRow,
 } from "../../db.js";
 import { requireAdmin } from "../../auth.js";
+import { isAdminLogin } from "../../config.js";
+import { projectToJson } from "../../github/github-project-import-service.js";
 
 function parseTags(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw.map((t) => String(t).trim()).filter(Boolean);
@@ -19,24 +24,18 @@ function parseTags(raw: unknown): string[] {
   return [];
 }
 
-function toJson(row: { id: number; sort_order: number; num_label: string; title: string; description: string; url: string; tags: string; created_at: number; updated_at: number }) {
-  return {
-    id: row.id,
-    sortOrder: row.sort_order,
-    numLabel: row.num_label,
-    title: row.title,
-    description: row.description,
-    url: row.url,
-    tags: JSON.parse(row.tags) as string[],
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
+function toJson(row: ProjectRow) {
+  return projectToJson({
+    ...row,
+    description: displayProjectDescription(row),
+  });
 }
 
 export default class ProjectsController {
-  list = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  list = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const rows = await listProjects();
+      const isAdmin = isAdminLogin(req.session?.user?.login);
+      const rows = await listProjects(!isAdmin);
       res.json(rows.map(toJson));
     } catch (error) {
       next(error);
@@ -45,7 +44,7 @@ export default class ProjectsController {
 
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const row = await getProject(Number(req.params.id));
+      const row = await getProject(String(req.params.id));
       if (!row) {
         res.status(404).json({ error: "Not found" });
         return;
@@ -60,7 +59,7 @@ export default class ProjectsController {
     requireAdmin,
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
-        const { title, description, url, numLabel, sortOrder, tags } = req.body ?? {};
+        const { title, description, url, numLabel, sortOrder, tags, techStack, isPublished } = req.body ?? {};
         const trimmedTitle = (title ?? "").trim();
         const trimmedDesc = (description ?? "").trim();
         const trimmedUrl = (url ?? "").trim();
@@ -69,8 +68,9 @@ export default class ProjectsController {
           return;
         }
         const tagList = parseTags(tags);
-        const existing = await listProjects();
-        const order = Number.isFinite(Number(sortOrder)) ? Number(sortOrder) : existing.length + 1;
+        const techList = parseTags(techStack);
+        const existingCount = await countProjects();
+        const order = Number.isFinite(Number(sortOrder)) ? Number(sortOrder) : existingCount + 1;
         const label = (numLabel ?? String(order).padStart(2, "0")).trim();
         const row = await insertProject({
           sortOrder: order,
@@ -79,6 +79,10 @@ export default class ProjectsController {
           description: trimmedDesc,
           url: trimmedUrl,
           tags: tagList,
+          techStack: techList,
+          isPublished: isPublished ?? true,
+          source: "manual",
+          descriptionSource: "custom",
         });
         res.status(201).json(toJson(row));
       } catch (error) {
@@ -91,13 +95,25 @@ export default class ProjectsController {
     requireAdmin,
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
-        const id = Number(req.params.id);
+        const id = String(req.params.id);
         const existing = await getProject(id);
         if (!existing) {
           res.status(404).json({ error: "Not found" });
           return;
         }
-        const { title, description, url, numLabel, sortOrder, tags } = req.body ?? {};
+        const {
+          title,
+          description,
+          url,
+          numLabel,
+          sortOrder,
+          tags,
+          isPublished,
+          descriptionSource,
+          githubDescription,
+          selectedLanguages,
+          techStack,
+        } = req.body ?? {};
         const row = await updateProject(id, {
           title: title !== undefined ? String(title).trim() : undefined,
           description: description !== undefined ? String(description).trim() : undefined,
@@ -105,6 +121,11 @@ export default class ProjectsController {
           numLabel: numLabel !== undefined ? String(numLabel).trim() : undefined,
           sortOrder: sortOrder !== undefined ? Number(sortOrder) : undefined,
           tags: tags !== undefined ? parseTags(tags) : undefined,
+          isPublished: isPublished !== undefined ? Boolean(isPublished) : undefined,
+          descriptionSource: descriptionSource !== undefined ? String(descriptionSource) : undefined,
+          githubDescription: githubDescription !== undefined ? String(githubDescription) : undefined,
+          selectedLanguages: selectedLanguages !== undefined ? parseTags(selectedLanguages) : undefined,
+          techStack: techStack !== undefined ? parseTags(techStack) : undefined,
         });
         res.json(toJson(row!));
       } catch (error) {
@@ -117,7 +138,7 @@ export default class ProjectsController {
     requireAdmin,
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
-        const id = Number(req.params.id);
+        const id = String(req.params.id);
         if (!(await deleteProject(id))) {
           res.status(404).json({ error: "Not found" });
           return;

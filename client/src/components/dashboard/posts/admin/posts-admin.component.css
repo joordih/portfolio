@@ -90,3 +90,29 @@
 .editor-wrap {
   margin-top: 24px;
 }
+
+@media (max-width: 820px) {
+  .toolbar-top {
+    justify-content: stretch;
+  }
+
+  .new-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .status {
+    justify-self: start;
+  }
+
+  .action-btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 40px;
+  }
+}

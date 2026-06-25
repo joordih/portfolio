@@ -1,38 +1,34 @@
-import { createClient, type Client } from "@libsql/client";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import { isProduction } from "./config.js";
+import { MongoClient, ObjectId, type Db, type Document, type WithId } from "mongodb";
+import { resolveMongoUrl } from "./config.js";
 
-function resolveClientConfig(): { url: string; authToken?: string } {
-  if (process.env.LIBSQL_URL) {
-    return {
-      url: process.env.LIBSQL_URL,
-      authToken: process.env.LIBSQL_AUTH_TOKEN,
-    };
-  }
-  if (isProduction()) {
-    throw new Error("LIBSQL_URL is required in production");
-  }
-  const dbPath = process.env.DATABASE_PATH ?? defaultLocalDbPath();
-  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-  return { url: `file:${dbPath}` };
+const COLLECTIONS = {
+  signatures: "signatures",
+  projects: "projects",
+  posts: "posts",
+  githubConnections: "github_connections",
+  githubStatsCache: "github_stats_cache",
+  siteSettings: "site_settings",
+} as const;
+
+const SETTING_KEYS = {
+  activityYears: "activity_years",
+} as const;
+
+let client: MongoClient | null = null;
+let db: Db | null = null;
+let initPromise: Promise<Db> | null = null;
+
+function idHex(doc: { _id?: ObjectId }): string {
+  return doc._id?.toHexString() ?? "";
 }
 
-function isLocalFileDb(url: string): boolean {
-  return url.startsWith("file:");
+function parseObjectId(id: string): ObjectId | null {
+  if (!ObjectId.isValid(id)) return null;
+  return new ObjectId(id);
 }
 
-function defaultLocalDbPath(): string {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  return path.join(__dirname, "..", "data.db");
-}
-
-let client: Client | null = null;
-let initPromise: Promise<Client> | null = null;
-
-async function getDb(): Promise<Client> {
-  if (client) return client;
+async function getDb(): Promise<Db> {
+  if (db) return db;
   if (!initPromise) {
     initPromise = initClient().catch((err) => {
       initPromise = null;
@@ -42,81 +38,62 @@ async function getDb(): Promise<Client> {
   return initPromise;
 }
 
-async function initClient(): Promise<Client> {
-  const config = resolveClientConfig();
-  const db = createClient(config);
-  if (isLocalFileDb(config.url)) {
-    await db.execute("PRAGMA journal_mode = WAL");
-  }
-  await initSchema(db);
-  await seedIfEmpty(db);
-  client = db;
-  return db;
+async function initClient(): Promise<Db> {
+  const mongoClient = new MongoClient(resolveMongoUrl(), {
+    maxPoolSize: 10,
+  });
+  await mongoClient.connect();
+  const database = mongoClient.db();
+  await ensureIndexes(database);
+  await seedIfEmpty(database);
+  client = mongoClient;
+  db = database;
+  return database;
 }
 
-async function initSchema(db: Client): Promise<void> {
-  await db.batch(
-    [
-    `CREATE TABLE IF NOT EXISTS signatures (
-      id         INTEGER PRIMARY KEY AUTOINCREMENT,
-      github_id  INTEGER NOT NULL,
-      login      TEXT    NOT NULL,
-      avatar_url TEXT,
-      message    TEXT    NOT NULL,
-      created_at INTEGER NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS projects (
-      id          INTEGER PRIMARY KEY AUTOINCREMENT,
-      sort_order  INTEGER NOT NULL DEFAULT 0,
-      num_label   TEXT    NOT NULL,
-      title       TEXT    NOT NULL,
-      description TEXT    NOT NULL,
-      url         TEXT    NOT NULL,
-      tags        TEXT    NOT NULL,
-      created_at  INTEGER NOT NULL,
-      updated_at  INTEGER NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS posts (
-      id            INTEGER PRIMARY KEY AUTOINCREMENT,
-      slug          TEXT    NOT NULL UNIQUE,
-      title         TEXT    NOT NULL,
-      excerpt       TEXT,
-      content_html  TEXT    NOT NULL,
-      content_json  TEXT    NOT NULL,
-      status        TEXT    NOT NULL DEFAULT 'draft',
-      reading_label TEXT,
-      date_label    TEXT,
-      created_at    INTEGER NOT NULL,
-      updated_at    INTEGER NOT NULL
-    )`,
-    ],
-    "write"
-  );
+async function ensureIndexes(database: Db): Promise<void> {
+  await Promise.all([
+    database.collection(COLLECTIONS.githubConnections).createIndex({ login: 1 }, { unique: true }),
+    database.collection(COLLECTIONS.githubStatsCache).createIndex({ cache_key: 1 }, { unique: true }),
+    database.collection(COLLECTIONS.projects).createIndex({ github_repo_id: 1 }, { sparse: true }),
+    database.collection(COLLECTIONS.posts).createIndex({ slug: 1 }, { unique: true }),
+    database.collection(COLLECTIONS.siteSettings).createIndex({ key: 1 }, { unique: true }),
+  ]);
 }
 
-async function seedIfEmpty(db: Client): Promise<void> {
-  const sigCount = await db.execute("SELECT COUNT(*) as c FROM signatures");
-  if (Number(sigCount.rows[0]?.c) === 0) {
-    const now = Date.now();
-    await db.batch(
-      [
+type SiteSettingDoc = {
+  key: string;
+  value: unknown;
+  updated_at: number;
+};
+
+async function seedIfEmpty(database: Db): Promise<void> {
+  const now = Date.now();
+  const hour = 1000 * 60 * 60;
+
+  const sigCount = await database.collection(COLLECTIONS.signatures).countDocuments();
+  if (sigCount === 0) {
+    await database.collection(COLLECTIONS.signatures).insertMany([
       {
-        sql: "INSERT INTO signatures (github_id, login, avatar_url, message, created_at) VALUES (?, ?, ?, ?, ?)",
-        args: [583231, "octocat", "https://github.com/octocat.png", "First signature on the wall.", now - 1000 * 60 * 60 * 26],
+        github_id: 583231,
+        login: "octocat",
+        avatar_url: "https://github.com/octocat.png",
+        message: "First signature on the wall.",
+        created_at: now - hour * 26,
       },
       {
-        sql: "INSERT INTO signatures (github_id, login, avatar_url, message, created_at) VALUES (?, ?, ?, ?, ?)",
-        args: [9919, "github", "https://github.com/github.png", "Clean template — easy to fork and customize.", now - 1000 * 60 * 60 * 70],
+        github_id: 9919,
+        login: "github",
+        avatar_url: "https://github.com/github.png",
+        message: "Clean template — easy to fork and customize.",
+        created_at: now - hour * 70,
       },
-      ],
-      "write"
-    );
+    ]);
   }
 
-  const projectCount = await db.execute("SELECT COUNT(*) as c FROM projects");
-  if (Number(projectCount.rows[0]?.c) === 0) {
-    const now = Date.now();
-    const projects = [
+  const projectCount = await database.collection(COLLECTIONS.projects).countDocuments();
+  if (projectCount === 0) {
+    await database.collection(COLLECTIONS.projects).insertMany([
       {
         sort_order: 1,
         num_label: "01",
@@ -124,6 +101,14 @@ async function seedIfEmpty(db: Client): Promise<void> {
         description: "A REST API built with your stack of choice. Replace this entry from the dashboard.",
         url: "https://github.com",
         tags: ["TypeScript", "API"],
+        is_published: true,
+        source: "manual",
+        description_source: "custom",
+        github_languages: [],
+        selected_languages: [],
+        tech_stack: [],
+        created_at: now,
+        updated_at: now,
       },
       {
         sort_order: 2,
@@ -132,91 +117,51 @@ async function seedIfEmpty(db: Client): Promise<void> {
         description: "A frontend or full-stack project highlight. Edit title, description, and tags in the dashboard.",
         url: "https://github.com",
         tags: ["Web", "Open Source"],
+        is_published: true,
+        source: "manual",
+        description_source: "custom",
+        github_languages: [],
+        selected_languages: [],
+        tech_stack: [],
+        created_at: now,
+        updated_at: now,
       },
-    ];
-    for (const p of projects) {
-      await db.execute({
-        sql: `INSERT INTO projects (sort_order, num_label, title, description, url, tags, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [p.sort_order, p.num_label, p.title, p.description, p.url, JSON.stringify(p.tags), now, now],
-      });
-    }
+    ]);
   }
 
-  const postCount = await db.execute("SELECT COUNT(*) as c FROM posts");
-  if (Number(postCount.rows[0]?.c) === 0) {
-    const now = Date.now();
-    const posts = [
-      {
-        slug: "welcome",
-        title: "Welcome to your portfolio",
-        dateLabel: new Date().toLocaleDateString("en", { year: "numeric", month: "2-digit" }).replace("/", " · "),
-        readingLabel: "1 min →",
-        html: "<p>Replace this post from the dashboard. The editor supports headings, lists, quotes, and pasted HTML.</p>",
-        json: JSON.stringify({
-          type: "doc",
-          content: [
-            {
-              type: "paragraph",
-              content: [{ type: "text", text: "Replace this post from the dashboard. The editor supports headings, lists, quotes, and pasted HTML." }],
-            },
-          ],
-        }),
-      },
-    ];
-    for (const p of posts) {
-      await db.execute({
-        sql: `INSERT INTO posts (slug, title, excerpt, content_html, content_json, status, reading_label, date_label, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, 'published', ?, ?, ?, ?)`,
-        args: [p.slug, p.title, null, p.html, p.json, p.readingLabel, p.dateLabel, now, now],
-      });
-    }
+  const postCount = await database.collection(COLLECTIONS.posts).countDocuments();
+  if (postCount === 0) {
+    await database.collection(COLLECTIONS.posts).insertOne({
+      slug: "welcome",
+      title: "Welcome to your portfolio",
+      excerpt: null,
+      content_html:
+        "<p>Replace this post from the dashboard. The editor supports headings, lists, quotes, and pasted HTML.</p>",
+      content_json: JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [
+              {
+                type: "text",
+                text: "Replace this post from the dashboard. The editor supports headings, lists, quotes, and pasted HTML.",
+              },
+            ],
+          },
+        ],
+      }),
+      status: "published",
+      reading_label: "1 min →",
+      date_label: new Date().toLocaleDateString("en", { year: "numeric", month: "2-digit" }).replace("/", " · "),
+      created_at: now,
+      updated_at: now,
+    });
   }
 }
 
-function asSignatureRow(row: Record<string, unknown>): SignatureRow {
-  return {
-    id: Number(row.id),
-    github_id: Number(row.github_id),
-    login: String(row.login),
-    avatar_url: row.avatar_url == null ? null : String(row.avatar_url),
-    message: String(row.message),
-    created_at: Number(row.created_at),
-  };
-}
-
-function asPostRow(row: Record<string, unknown>): PostRow {
-  return {
-    id: Number(row.id),
-    slug: String(row.slug),
-    title: String(row.title),
-    excerpt: row.excerpt == null ? null : String(row.excerpt),
-    content_html: String(row.content_html),
-    content_json: String(row.content_json),
-    status: String(row.status),
-    reading_label: row.reading_label == null ? null : String(row.reading_label),
-    date_label: row.date_label == null ? null : String(row.date_label),
-    created_at: Number(row.created_at),
-    updated_at: Number(row.updated_at),
-  };
-}
-
-function asProjectRow(row: Record<string, unknown>): ProjectRow {
-  return {
-    id: Number(row.id),
-    sort_order: Number(row.sort_order),
-    num_label: String(row.num_label),
-    title: String(row.title),
-    description: String(row.description),
-    url: String(row.url),
-    tags: String(row.tags),
-    created_at: Number(row.created_at),
-    updated_at: Number(row.updated_at),
-  };
-}
-
-export type SignatureRow = {
-  id: number;
+export type SignatureDoc = {
+  _id?: ObjectId;
   github_id: number;
   login: string;
   avatar_url: string | null;
@@ -224,8 +169,30 @@ export type SignatureRow = {
   created_at: number;
 };
 
-export type PostRow = {
-  id: number;
+export type ProjectDoc = {
+  _id?: ObjectId;
+  sort_order: number;
+  num_label: string;
+  title: string;
+  description: string;
+  url: string;
+  tags: string[];
+  github_repo_id?: number | null;
+  github_full_name?: string | null;
+  is_published?: boolean | null;
+  is_private?: boolean | null;
+  description_source?: string | null;
+  github_description?: string | null;
+  github_languages?: string[] | null;
+  selected_languages?: string[] | null;
+  tech_stack?: string[] | null;
+  source?: string | null;
+  created_at: number;
+  updated_at: number;
+};
+
+export type PostDoc = {
+  _id?: ObjectId;
   slug: string;
   title: string;
   excerpt: string | null;
@@ -238,10 +205,46 @@ export type PostRow = {
   updated_at: number;
 };
 
+export type GitHubConnectionDoc = {
+  _id?: ObjectId;
+  github_id: number;
+  login: string;
+  access_token_encrypted: string;
+  scopes: string;
+  updated_at: number;
+};
+
+export type GitHubStatsCacheDoc = {
+  _id?: ObjectId;
+  cache_key: string;
+  payload_json: string;
+  expires_at: number;
+};
+
+export type SignatureRow = SignatureDoc & { id: string };
+export type ProjectRow = ProjectDoc & { id: string };
+export type PostRow = PostDoc & { id: string };
+
+function asSignatureRow(doc: WithId<SignatureDoc>): SignatureRow {
+  return { ...doc, id: idHex(doc) };
+}
+
+function asProjectRow(doc: WithId<ProjectDoc>): ProjectRow {
+  return { ...doc, id: idHex(doc) };
+}
+
+function asPostRow(doc: WithId<PostDoc>): PostRow {
+  return { ...doc, id: idHex(doc) };
+}
+
 export async function listSignatures(): Promise<SignatureRow[]> {
-  const db = await getDb();
-  const result = await db.execute("SELECT * FROM signatures ORDER BY created_at DESC");
-  return result.rows.map((row) => asSignatureRow(row as Record<string, unknown>));
+  const database = await getDb();
+  const docs = await database
+    .collection<SignatureDoc>(COLLECTIONS.signatures)
+    .find()
+    .sort({ created_at: -1 })
+    .toArray();
+  return docs.map(asSignatureRow);
 }
 
 export async function insertSignature(
@@ -250,52 +253,58 @@ export async function insertSignature(
   avatarUrl: string | null,
   message: string
 ): Promise<SignatureRow> {
-  const db = await getDb();
+  const database = await getDb();
   const now = Date.now();
-  const result = await db.execute({
-    sql: "INSERT INTO signatures (github_id, login, avatar_url, message, created_at) VALUES (?, ?, ?, ?, ?)",
-    args: [githubId, login, avatarUrl, message, now],
-  });
-  const row = await db.execute({
-    sql: "SELECT * FROM signatures WHERE id = ?",
-    args: [Number(result.lastInsertRowid)],
-  });
-  return asSignatureRow(row.rows[0] as Record<string, unknown>);
+  const doc: SignatureDoc = {
+    github_id: githubId,
+    login,
+    avatar_url: avatarUrl,
+    message,
+    created_at: now,
+  };
+  const result = await database.collection<SignatureDoc>(COLLECTIONS.signatures).insertOne(doc);
+  return asSignatureRow({ ...doc, _id: result.insertedId });
 }
 
-export async function getSignature(id: number): Promise<SignatureRow | undefined> {
-  const db = await getDb();
-  const result = await db.execute({ sql: "SELECT * FROM signatures WHERE id = ?", args: [id] });
-  if (result.rows.length === 0) return undefined;
-  return asSignatureRow(result.rows[0] as Record<string, unknown>);
+export async function getSignature(id: string): Promise<SignatureRow | undefined> {
+  const oid = parseObjectId(id);
+  if (!oid) return undefined;
+  const database = await getDb();
+  const doc = await database.collection<SignatureDoc>(COLLECTIONS.signatures).findOne({ _id: oid });
+  return doc ? asSignatureRow(doc) : undefined;
 }
 
-export async function deleteSignature(id: number): Promise<boolean> {
-  const db = await getDb();
-  const result = await db.execute({ sql: "DELETE FROM signatures WHERE id = ?", args: [id] });
-  return result.rowsAffected > 0;
+export async function deleteSignature(id: string): Promise<boolean> {
+  const oid = parseObjectId(id);
+  if (!oid) return false;
+  const database = await getDb();
+  const result = await database.collection(COLLECTIONS.signatures).deleteOne({ _id: oid });
+  return result.deletedCount > 0;
 }
 
 export async function listPosts(includeDrafts: boolean): Promise<PostRow[]> {
-  const db = await getDb();
-  const result = includeDrafts
-    ? await db.execute("SELECT * FROM posts ORDER BY created_at DESC")
-    : await db.execute("SELECT * FROM posts WHERE status = 'published' ORDER BY created_at DESC");
-  return result.rows.map((row) => asPostRow(row as Record<string, unknown>));
+  const database = await getDb();
+  const filter: Document = includeDrafts ? {} : { status: "published" };
+  const docs = await database
+    .collection<PostDoc>(COLLECTIONS.posts)
+    .find(filter)
+    .sort({ created_at: -1 })
+    .toArray();
+  return docs.map(asPostRow);
 }
 
 export async function getPostBySlug(slug: string): Promise<PostRow | undefined> {
-  const db = await getDb();
-  const result = await db.execute({ sql: "SELECT * FROM posts WHERE slug = ?", args: [slug] });
-  if (result.rows.length === 0) return undefined;
-  return asPostRow(result.rows[0] as Record<string, unknown>);
+  const database = await getDb();
+  const doc = await database.collection<PostDoc>(COLLECTIONS.posts).findOne({ slug });
+  return doc ? asPostRow(doc) : undefined;
 }
 
-export async function getPostById(id: number): Promise<PostRow | undefined> {
-  const db = await getDb();
-  const result = await db.execute({ sql: "SELECT * FROM posts WHERE id = ?", args: [id] });
-  if (result.rows.length === 0) return undefined;
-  return asPostRow(result.rows[0] as Record<string, unknown>);
+export async function getPostById(id: string): Promise<PostRow | undefined> {
+  const oid = parseObjectId(id);
+  if (!oid) return undefined;
+  const database = await getDb();
+  const doc = await database.collection<PostDoc>(COLLECTIONS.posts).findOne({ _id: oid });
+  return doc ? asPostRow(doc) : undefined;
 }
 
 export async function insertPost(data: {
@@ -308,33 +317,26 @@ export async function insertPost(data: {
   readingLabel?: string | null;
   dateLabel?: string | null;
 }): Promise<PostRow> {
-  const db = await getDb();
+  const database = await getDb();
   const now = Date.now();
-  const result = await db.execute({
-    sql: `INSERT INTO posts (slug, title, excerpt, content_html, content_json, status, reading_label, date_label, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [
-      data.slug,
-      data.title,
-      data.excerpt ?? null,
-      data.contentHtml,
-      data.contentJson,
-      data.status,
-      data.readingLabel ?? null,
-      data.dateLabel ?? null,
-      now,
-      now,
-    ],
-  });
-  const row = await db.execute({
-    sql: "SELECT * FROM posts WHERE id = ?",
-    args: [Number(result.lastInsertRowid)],
-  });
-  return asPostRow(row.rows[0] as Record<string, unknown>);
+  const doc: PostDoc = {
+    slug: data.slug,
+    title: data.title,
+    excerpt: data.excerpt ?? null,
+    content_html: data.contentHtml,
+    content_json: data.contentJson,
+    status: data.status,
+    reading_label: data.readingLabel ?? null,
+    date_label: data.dateLabel ?? null,
+    created_at: now,
+    updated_at: now,
+  };
+  const result = await database.collection<PostDoc>(COLLECTIONS.posts).insertOne(doc);
+  return asPostRow({ ...doc, _id: result.insertedId });
 }
 
 export async function updatePost(
-  id: number,
+  id: string,
   data: Partial<{
     slug: string;
     title: string;
@@ -348,58 +350,61 @@ export async function updatePost(
 ): Promise<PostRow | undefined> {
   const existing = await getPostById(id);
   if (!existing) return undefined;
+  const oid = parseObjectId(id);
+  if (!oid) return undefined;
   const now = Date.now();
-  const db = await getDb();
-  await db.execute({
-    sql: `UPDATE posts SET
-      slug = ?, title = ?, excerpt = ?, content_html = ?, content_json = ?,
-      status = ?, reading_label = ?, date_label = ?, updated_at = ?
-     WHERE id = ?`,
-    args: [
-      data.slug ?? existing.slug,
-      data.title ?? existing.title,
-      data.excerpt !== undefined ? data.excerpt : existing.excerpt,
-      data.contentHtml ?? existing.content_html,
-      data.contentJson ?? existing.content_json,
-      data.status ?? existing.status,
-      data.readingLabel !== undefined ? data.readingLabel : existing.reading_label,
-      data.dateLabel !== undefined ? data.dateLabel : existing.date_label,
-      now,
-      id,
-    ],
-  });
+  const database = await getDb();
+  const update: Partial<PostDoc> = {
+    slug: data.slug ?? existing.slug,
+    title: data.title ?? existing.title,
+    excerpt: data.excerpt !== undefined ? data.excerpt : existing.excerpt,
+    content_html: data.contentHtml ?? existing.content_html,
+    content_json: data.contentJson ?? existing.content_json,
+    status: data.status ?? existing.status,
+    reading_label: data.readingLabel !== undefined ? data.readingLabel : existing.reading_label,
+    date_label: data.dateLabel !== undefined ? data.dateLabel : existing.date_label,
+    updated_at: now,
+  };
+  await database.collection<PostDoc>(COLLECTIONS.posts).updateOne({ _id: oid }, { $set: update });
   return getPostById(id);
 }
 
-export async function deletePost(id: number): Promise<boolean> {
-  const db = await getDb();
-  const result = await db.execute({ sql: "DELETE FROM posts WHERE id = ?", args: [id] });
-  return result.rowsAffected > 0;
+export async function deletePost(id: string): Promise<boolean> {
+  const oid = parseObjectId(id);
+  if (!oid) return false;
+  const database = await getDb();
+  const result = await database.collection(COLLECTIONS.posts).deleteOne({ _id: oid });
+  return result.deletedCount > 0;
 }
 
-export type ProjectRow = {
-  id: number;
-  sort_order: number;
-  num_label: string;
-  title: string;
-  description: string;
-  url: string;
-  tags: string;
-  created_at: number;
-  updated_at: number;
-};
-
-export async function listProjects(): Promise<ProjectRow[]> {
-  const db = await getDb();
-  const result = await db.execute("SELECT * FROM projects ORDER BY sort_order ASC, id ASC");
-  return result.rows.map((row) => asProjectRow(row as Record<string, unknown>));
+export async function listProjects(publishedOnly = false): Promise<ProjectRow[]> {
+  const database = await getDb();
+  const filter: Document = publishedOnly ? { is_published: { $ne: false } } : {};
+  const docs = await database
+    .collection<ProjectDoc>(COLLECTIONS.projects)
+    .find(filter)
+    .sort({ sort_order: 1, created_at: 1 })
+    .toArray();
+  return docs.map(asProjectRow);
 }
 
-export async function getProject(id: number): Promise<ProjectRow | undefined> {
-  const db = await getDb();
-  const result = await db.execute({ sql: "SELECT * FROM projects WHERE id = ?", args: [id] });
-  if (result.rows.length === 0) return undefined;
-  return asProjectRow(result.rows[0] as Record<string, unknown>);
+export async function getProject(id: string): Promise<ProjectRow | undefined> {
+  const oid = parseObjectId(id);
+  if (!oid) return undefined;
+  const database = await getDb();
+  const doc = await database.collection<ProjectDoc>(COLLECTIONS.projects).findOne({ _id: oid });
+  return doc ? asProjectRow(doc) : undefined;
+}
+
+export async function findProjectByGitHubRepoId(repoId: number): Promise<ProjectRow | undefined> {
+  const database = await getDb();
+  const doc = await database.collection<ProjectDoc>(COLLECTIONS.projects).findOne({ github_repo_id: repoId });
+  return doc ? asProjectRow(doc) : undefined;
+}
+
+export async function countProjects(): Promise<number> {
+  const database = await getDb();
+  return database.collection(COLLECTIONS.projects).countDocuments();
 }
 
 export async function insertProject(data: {
@@ -409,23 +414,45 @@ export async function insertProject(data: {
   description: string;
   url: string;
   tags: string[];
+  githubRepoId?: number | null;
+  githubFullName?: string | null;
+  isPublished?: boolean;
+  isPrivate?: boolean | null;
+  descriptionSource?: string;
+  githubDescription?: string | null;
+  githubLanguages?: string[];
+  selectedLanguages?: string[];
+  techStack?: string[];
+  source?: string;
 }): Promise<ProjectRow> {
-  const db = await getDb();
+  const database = await getDb();
   const now = Date.now();
-  const result = await db.execute({
-    sql: `INSERT INTO projects (sort_order, num_label, title, description, url, tags, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [data.sortOrder, data.numLabel, data.title, data.description, data.url, JSON.stringify(data.tags), now, now],
-  });
-  const row = await db.execute({
-    sql: "SELECT * FROM projects WHERE id = ?",
-    args: [Number(result.lastInsertRowid)],
-  });
-  return asProjectRow(row.rows[0] as Record<string, unknown>);
+  const doc: ProjectDoc = {
+    sort_order: data.sortOrder,
+    num_label: data.numLabel,
+    title: data.title,
+    description: data.description,
+    url: data.url,
+    tags: data.tags,
+    github_repo_id: data.githubRepoId ?? null,
+    github_full_name: data.githubFullName ?? null,
+    is_published: data.isPublished ?? true,
+    is_private: data.isPrivate ?? null,
+    description_source: data.descriptionSource ?? "custom",
+    github_description: data.githubDescription ?? null,
+    github_languages: data.githubLanguages ?? [],
+    selected_languages: data.selectedLanguages ?? [],
+    tech_stack: data.techStack ?? [],
+    source: data.source ?? "manual",
+    created_at: now,
+    updated_at: now,
+  };
+  const result = await database.collection<ProjectDoc>(COLLECTIONS.projects).insertOne(doc);
+  return asProjectRow({ ...doc, _id: result.insertedId });
 }
 
 export async function updateProject(
-  id: number,
+  id: string,
   data: Partial<{
     sortOrder: number;
     numLabel: string;
@@ -433,33 +460,131 @@ export async function updateProject(
     description: string;
     url: string;
     tags: string[];
+    githubRepoId: number | null;
+    githubFullName: string | null;
+    isPublished: boolean;
+    isPrivate: boolean | null;
+    descriptionSource: string;
+    githubDescription: string | null;
+    githubLanguages: string[];
+    selectedLanguages: string[];
+    techStack: string[];
+    source: string;
   }>
 ): Promise<ProjectRow | undefined> {
   const existing = await getProject(id);
   if (!existing) return undefined;
+  const oid = parseObjectId(id);
+  if (!oid) return undefined;
   const now = Date.now();
-  const tags = data.tags ?? (JSON.parse(existing.tags) as string[]);
-  const db = await getDb();
-  await db.execute({
-    sql: `UPDATE projects SET
-      sort_order = ?, num_label = ?, title = ?, description = ?, url = ?, tags = ?, updated_at = ?
-     WHERE id = ?`,
-    args: [
-      data.sortOrder ?? existing.sort_order,
-      data.numLabel ?? existing.num_label,
-      data.title ?? existing.title,
-      data.description ?? existing.description,
-      data.url ?? existing.url,
-      JSON.stringify(tags),
-      now,
-      id,
-    ],
-  });
+  const database = await getDb();
+  const update: Partial<ProjectDoc> = {
+    sort_order: data.sortOrder ?? existing.sort_order,
+    num_label: data.numLabel ?? existing.num_label,
+    title: data.title ?? existing.title,
+    description: data.description ?? existing.description,
+    url: data.url ?? existing.url,
+    tags: data.tags ?? existing.tags,
+    github_repo_id: data.githubRepoId !== undefined ? data.githubRepoId : existing.github_repo_id,
+    github_full_name: data.githubFullName !== undefined ? data.githubFullName : existing.github_full_name,
+    is_published: data.isPublished !== undefined ? data.isPublished : existing.is_published,
+    is_private: data.isPrivate !== undefined ? data.isPrivate : existing.is_private,
+    description_source: data.descriptionSource !== undefined ? data.descriptionSource : existing.description_source,
+    github_description: data.githubDescription !== undefined ? data.githubDescription : existing.github_description,
+    github_languages: data.githubLanguages !== undefined ? data.githubLanguages : existing.github_languages,
+    selected_languages: data.selectedLanguages !== undefined ? data.selectedLanguages : existing.selected_languages,
+    tech_stack: data.techStack !== undefined ? data.techStack : existing.tech_stack,
+    source: data.source !== undefined ? data.source : existing.source,
+    updated_at: now,
+  };
+  await database.collection<ProjectDoc>(COLLECTIONS.projects).updateOne({ _id: oid }, { $set: update });
   return getProject(id);
 }
 
-export async function deleteProject(id: number): Promise<boolean> {
-  const db = await getDb();
-  const result = await db.execute({ sql: "DELETE FROM projects WHERE id = ?", args: [id] });
-  return result.rowsAffected > 0;
+export async function deleteProject(id: string): Promise<boolean> {
+  const oid = parseObjectId(id);
+  if (!oid) return false;
+  const database = await getDb();
+  const result = await database.collection(COLLECTIONS.projects).deleteOne({ _id: oid });
+  return result.deletedCount > 0;
+}
+
+export async function findGitHubConnectionByLogin(login: string): Promise<GitHubConnectionDoc | undefined> {
+  const database = await getDb();
+  return (await database.collection<GitHubConnectionDoc>(COLLECTIONS.githubConnections).findOne({ login })) ?? undefined;
+}
+
+export async function upsertGitHubConnection(data: {
+  githubId: number;
+  login: string;
+  accessTokenEncrypted: string;
+  scopes: string;
+  updatedAt: number;
+}): Promise<void> {
+  const database = await getDb();
+  await database.collection<GitHubConnectionDoc>(COLLECTIONS.githubConnections).updateOne(
+    { login: data.login },
+    {
+      $set: {
+        github_id: data.githubId,
+        login: data.login,
+        access_token_encrypted: data.accessTokenEncrypted,
+        scopes: data.scopes,
+        updated_at: data.updatedAt,
+      },
+    },
+    { upsert: true }
+  );
+}
+
+export async function findGitHubStatsCache(key: string): Promise<GitHubStatsCacheDoc | undefined> {
+  const database = await getDb();
+  return (await database.collection<GitHubStatsCacheDoc>(COLLECTIONS.githubStatsCache).findOne({ cache_key: key })) ?? undefined;
+}
+
+export async function upsertGitHubStatsCache(key: string, payloadJson: string, expiresAt: number): Promise<void> {
+  const database = await getDb();
+  await database.collection<GitHubStatsCacheDoc>(COLLECTIONS.githubStatsCache).updateOne(
+    { cache_key: key },
+    { $set: { cache_key: key, payload_json: payloadJson, expires_at: expiresAt } },
+    { upsert: true }
+  );
+}
+
+export async function getActivityYearsSetting(): Promise<number[] | null> {
+  const database = await getDb();
+  const doc = await database
+    .collection<SiteSettingDoc>(COLLECTIONS.siteSettings)
+    .findOne({ key: SETTING_KEYS.activityYears });
+
+  if (!doc || !Array.isArray(doc.value)) return null;
+
+  const years = doc.value.filter((year): year is number => typeof year === "number" && Number.isInteger(year));
+  return years.length > 0 ? years : null;
+}
+
+export async function setActivityYearsSetting(years: number[]): Promise<number[]> {
+  const database = await getDb();
+  const normalized = [...new Set(years)].sort((a, b) => b - a);
+
+  await database.collection<SiteSettingDoc>(COLLECTIONS.siteSettings).updateOne(
+    { key: SETTING_KEYS.activityYears },
+    {
+      $set: {
+        key: SETTING_KEYS.activityYears,
+        value: normalized,
+        updated_at: Date.now(),
+      },
+    },
+    { upsert: true }
+  );
+
+  return normalized;
+}
+
+export function displayProjectDescription(project: ProjectRow): string {
+  if (project.description_source === "github" && project.github_description) {
+    return project.github_description;
+  }
+  return project.description;
 }

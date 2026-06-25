@@ -7,7 +7,7 @@ import {
   shouldMountGnavGlass,
 } from "@/utils/glass-support";
 
-const MORE_ROUTES = new Set(["/stack", "/blog", "/guestbook"]);
+const MORE_ROUTES = new Set(["/stack", "/blog", "/guestbook", "/activity"]);
 
 class SiteHeaderComponent extends HTMLElement {
   private moreOpen = false;
@@ -18,6 +18,7 @@ class SiteHeaderComponent extends HTMLElement {
   private islandGlass: GlassChromeOverlay | null = null;
   private contactGlass: GlassChromeOverlay | null = null;
   private dropGlass: GlassChromeOverlay | null = null;
+  private headerResizeObserver: ResizeObserver | null = null;
   private readonly onDocClick: (event: MouseEvent) => void;
   private readonly onSection: (event: Event) => void;
   private readonly onRoute: (event: Event) => void;
@@ -40,12 +41,17 @@ class SiteHeaderComponent extends HTMLElement {
     this.updateThemeBtn();
     this.setupEventListeners();
     this.syncRoute(location.pathname);
+    this.headerResizeObserver = new ResizeObserver(() => this.updateHeaderOffset());
+    this.headerResizeObserver.observe(this);
     requestAnimationFrame(() => {
+      this.updateHeaderOffset();
       requestAnimationFrame(() => this.initGlass());
     });
   }
 
   disconnectedCallback(): void {
+    this.headerResizeObserver?.disconnect();
+    this.headerResizeObserver = null;
     this.disconnectEventListeners();
     this.destroyGlass();
   }
@@ -147,7 +153,20 @@ class SiteHeaderComponent extends HTMLElement {
     this.dropGlass?.refreshTint();
   }
 
+  private updateHeaderOffset(): void {
+    const height = this.getBoundingClientRect().height;
+    document.documentElement.style.setProperty("--header-offset", `${Math.ceil(height + 12)}px`);
+  }
+
   private handleResize(): void {
+    if (this.moreOpen && window.innerWidth <= 820) {
+      this.setMoreOpen(false);
+    }
+
+    if (this.onDashboard && window.innerWidth <= 820) {
+      requestAnimationFrame(() => this.scrollNavToDashboard());
+    }
+
     if (!shouldMountGnavGlass()) {
       if (this.pillGlass || this.islandGlass || this.contactGlass || this.dropGlass) {
         this.destroyGlass();
@@ -281,7 +300,22 @@ class SiteHeaderComponent extends HTMLElement {
       }
     });
 
-    this.pillGlass?.syncActive();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.pillGlass?.syncActive();
+        if (onDashboard && window.innerWidth <= 820) {
+          this.scrollNavToDashboard();
+        }
+      });
+    });
+  }
+
+  private scrollNavToDashboard(): void {
+    const track = this.querySelector<HTMLElement>("[data-gnav-scroll]");
+    const dashboardLink = this.querySelector<HTMLElement>("[data-dashboard-link]");
+    if (!track || !dashboardLink?.classList.contains("gnav-nav__link--visible")) return;
+
+    track.scrollLeft = track.scrollWidth - track.clientWidth;
   }
 
   private toggleTheme(): void {
@@ -301,7 +335,9 @@ class SiteHeaderComponent extends HTMLElement {
   private setMoreOpen(open: boolean): void {
     this.moreOpen = open;
     this.querySelector("[data-dropdown]")?.classList.toggle("gnav-drop--open", open);
-    this.querySelector("[data-caret]")?.classList.toggle("gnav-caret--open", open);
+    this.querySelectorAll(".gnav-caret").forEach((caret) => {
+      caret.classList.toggle("gnav-caret--open", open);
+    });
     this.dropGlass?.setOpen(open);
   }
 

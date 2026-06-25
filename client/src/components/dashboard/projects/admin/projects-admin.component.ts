@@ -5,6 +5,7 @@ import css from "./projects-admin.component.css?raw";
 import html from "./projects-admin.component.html?raw";
 import { getProjects, deleteProject } from "@/data/projects";
 import "../editor/project-editor.component";
+import "../import/github-import.component";
 
 class ProjectsAdminComponent extends HTMLElement {
   private shadow: ShadowRoot;
@@ -38,6 +39,9 @@ class ProjectsAdminComponent extends HTMLElement {
     this.shadow.querySelector("[data-new]")?.addEventListener("click", () => {
       this.openEditor();
     });
+    this.shadow.querySelector("[data-import]")?.addEventListener("click", () => {
+      this.openImport();
+    });
   }
 
   private disconnectEventListeners(): void {
@@ -55,7 +59,12 @@ class ProjectsAdminComponent extends HTMLElement {
       <div class="row">
         <div>
           <div class="row__title">${escapeHtml(project.title)}</div>
-          <div class="row__meta">${project.numLabel} · order ${project.sortOrder}</div>
+          <div class="row__meta">
+            ${project.numLabel} · order ${project.sortOrder}
+            · <span class="status-badge ${project.isPublished ? "status-badge--published" : "status-badge--draft"}">${project.isPublished ? "Published" : "Draft"}</span>
+            · <span class="status-badge status-badge--github">${project.source === "github" ? "GitHub" : "Manual"}</span>
+            ${project.isPrivate ? " · Private" : ""}
+          </div>
         </div>
         <button type="button" class="action-btn" data-edit="${project.id}">Edit</button>
         <button type="button" class="action-btn" data-delete="${project.id}">Delete</button>
@@ -75,7 +84,7 @@ class ProjectsAdminComponent extends HTMLElement {
       button.addEventListener(
         "click",
         () => {
-          this.openEditor(Number((button as HTMLElement).dataset.edit));
+          this.openEditor((button as HTMLElement).dataset.edit);
         },
         { signal }
       );
@@ -87,7 +96,7 @@ class ProjectsAdminComponent extends HTMLElement {
         async () => {
           if (!confirm("Delete this project?")) return;
 
-          await deleteProject(Number((button as HTMLElement).dataset.delete));
+          await deleteProject((button as HTMLElement).dataset.delete ?? "");
           this.closeEditor();
           await this.loadProjects();
         },
@@ -101,7 +110,7 @@ class ProjectsAdminComponent extends HTMLElement {
     this.listAbort = undefined;
   }
 
-  private openEditor(projectId?: number): void {
+  private openEditor(projectId?: string): void {
     const slot = this.shadow.querySelector("[data-editor-slot]");
     if (!slot) return;
 
@@ -113,6 +122,19 @@ class ProjectsAdminComponent extends HTMLElement {
       void this.loadProjects();
     });
     editor?.addEventListener("project-cancel", () => this.closeEditor());
+  }
+
+  private openImport(): void {
+    const slot = this.shadow.querySelector("[data-editor-slot]");
+    if (!slot) return;
+
+    slot.innerHTML = /* html */ `<github-import-component></github-import-component>`;
+    const importer = slot.querySelector("github-import-component");
+    importer?.addEventListener("github-import-saved", () => {
+      this.closeEditor();
+      void this.loadProjects();
+    });
+    importer?.addEventListener("github-import-cancel", () => this.closeEditor());
   }
 
   private closeEditor(): void {

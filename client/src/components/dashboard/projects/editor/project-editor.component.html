@@ -1,5 +1,10 @@
 <div class="form">
   <h2 class="form__title" data-form-title>New project</h2>
+  <p class="form__note" data-github-note hidden>Linked to GitHub. Title and URL sync from the repository import flow.</p>
+  <label class="field">
+    <span class="field__label">Published</span>
+    <input type="checkbox" data-published checked />
+  </label>
   <label class="field">
     <span class="field__label">Number label</span>
     <input class="field__input" type="text" data-num placeholder="01" />
@@ -19,6 +24,14 @@
   <label class="field">
     <span class="field__label">Description</span>
     <textarea class="field__input field__textarea" rows="4" data-description required></textarea>
+  </label>
+  <label class="field">
+    <span class="field__label">Languages (comma-separated)</span>
+    <input class="field__input" type="text" data-languages placeholder="Swift, TypeScript" />
+  </label>
+  <label class="field">
+    <span class="field__label">Tech stack (comma-separated)</span>
+    <input class="field__input" type="text" data-tech-stack placeholder="Vapor, MongoDB" />
   </label>
   <label class="field">
     <span class="field__label">Tags (comma-separated)</span>

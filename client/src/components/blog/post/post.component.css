@@ -3,7 +3,7 @@
   z-index: var(--z-base);
   max-width: 720px;
   margin: 0 auto;
-  padding: clamp(110px, 12vw, 140px) clamp(20px, 4vw, 32px) clamp(72px, 8vw, 96px);
+  padding: var(--header-offset) clamp(20px, 4vw, 32px) clamp(72px, 8vw, 96px);
 }
 
 .back {
@@ -117,4 +117,15 @@
   border: none;
   border-top: 1px solid var(--border);
   margin: 2em 0;
+}
+
+@media (max-width: 640px) {
+  .content {
+    font-size: 16px;
+  }
+
+  .content pre {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }

@@ -29,3 +29,18 @@ export function getAdminLogin(): string {
 export function isAdminLogin(login: string | undefined | null): boolean {
   return Boolean(login && login === getAdminLogin());
 }
+
+export function getGithubUsername(): string {
+  const configured = process.env.GITHUB_USERNAME?.trim() ?? "";
+  return configured || getAdminLogin();
+}
+
+export function resolveMongoUrl(): string {
+  if (process.env.MONGO_URL?.trim()) {
+    return process.env.MONGO_URL.trim();
+  }
+  if (isProduction()) {
+    throw new Error("MONGO_URL is required in production");
+  }
+  return "mongodb://localhost:27017/portfolio";
+}

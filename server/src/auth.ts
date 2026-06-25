@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import crypto from "crypto";
 import { isAdminLogin, resolveClientOrigin, resolveGithubCallbackUrl } from "./config.js";
+import { saveGitHubToken } from "./github/github-token-store.js";
 
 function safeNext(next: unknown): string {
   if (typeof next !== "string" || !next.startsWith("/") || next.startsWith("//") || next.includes("://")) {
@@ -49,7 +50,7 @@ router.get("/github", (req: Request, res: Response) => {
   req.session!.oauthNext = safeNext(req.query.next);
   const params = new URLSearchParams({
     client_id: clientId,
-    scope: "read:user",
+    scope: "read:user repo",
     redirect_uri: callbackUrl,
     state,
   });
@@ -66,7 +67,6 @@ router.get("/github/callback", async (req: Request, res: Response) => {
 
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
-  const callbackUrl = resolveGithubCallbackUrl();
   if (!clientId || !clientSecret) {
     fallbackRedirect(res);
     return;
@@ -81,7 +81,7 @@ router.get("/github/callback", async (req: Request, res: Response) => {
       },
       body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code }),
     });
-    const tokenData = (await tokenRes.json()) as { access_token?: string };
+    const tokenData = (await tokenRes.json()) as { access_token?: string; scope?: string };
     if (!tokenData.access_token) {
       fallbackRedirect(res);
       return;
@@ -95,6 +95,11 @@ router.get("/github/callback", async (req: Request, res: Response) => {
     });
     const user = (await userRes.json()) as { id: number; login: string; avatar_url: string };
     req.session!.user = { id: user.id, login: user.login, avatar_url: user.avatar_url };
+
+    if (isAdminLogin(user.login)) {
+      await saveGitHubToken(user.login, user.id, tokenData.access_token, tokenData.scope);
+    }
+
     afterAuthRedirect(req, res);
   } catch {
     fallbackRedirect(res);

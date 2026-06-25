@@ -18,6 +18,7 @@ export default class RouterController {
         "/stack": "stack",
         "/guestbook": "guestbook",
         "/blog": "blog",
+        "/activity": "activity",
         "/dashboard": "dashboard",
       };
 

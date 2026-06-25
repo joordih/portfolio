@@ -164,6 +164,25 @@ export class GlassChromeOverlay {
     this.syncFocus();
   }
 
+  private clampSegmentBox(
+    centerX: number,
+    centerY: number,
+    width: number,
+    height: number,
+  ): { left: number; top: number } {
+    const surfaceW = Math.max(this.surfaceWidth, 1);
+    const surfaceH = Math.max(this.surfaceHeight, 1);
+    let left = centerX - width / 2;
+    let top = centerY - height / 2;
+
+    if (left + width > surfaceW) left = surfaceW - width;
+    if (left < 0) left = 0;
+    if (top + height > surfaceH) top = surfaceH - height;
+    if (top < 0) top = 0;
+
+    return { left, top };
+  }
+
   private syncFocus(): void {
     const { mode, activeSelector, hoverSelector, paddingX = 0 } = this.options;
 
@@ -173,10 +192,10 @@ export class GlassChromeOverlay {
 
       const rootRect = this.root.getBoundingClientRect();
       const activeRect = active.getBoundingClientRect();
-      const x = activeRect.left - rootRect.left + activeRect.width / 2;
-      const y = activeRect.top - rootRect.top + activeRect.height / 2;
       const w = activeRect.width + paddingX * 2;
       const h = activeRect.height;
+      const x = activeRect.left - rootRect.left + activeRect.width / 2;
+      const y = activeRect.top - rootRect.top + activeRect.height / 2;
 
       this.springX.target = x;
       this.springY.target = y;
@@ -289,21 +308,18 @@ export class GlassChromeOverlay {
       if (this.indicator && this.options.mode === "segmented") {
         const effW = this.springW.current * morphScaleX;
         const effH = indicatorH * morphScaleY;
-        const left = this.springX.current - effW / 2;
-        const top = this.springY.current - effH / 2;
+        const box = this.clampSegmentBox(this.springX.current, this.springY.current, effW, effH);
 
-        this.indicator.style.transform = `translate(${left}px, ${top}px) scaleX(${morphScaleX}) scaleY(${morphScaleY}) skewX(${morphSkewDeg}deg)`;
+        this.indicator.style.transform = `translate(${box.left}px, ${box.top}px) scaleX(${morphScaleX}) scaleY(${morphScaleY}) skewX(${morphSkewDeg}deg)`;
         this.indicator.style.width = `${this.springW.current}px`;
         this.indicator.style.height = `${indicatorH}px`;
         this.indicator.style.opacity = String(open);
 
         if (this.activeClip) {
-          const effLeft = this.springX.current - effW / 2;
-          const effTop = this.springY.current - effH / 2;
-          const effRight = this.surfaceWidth - effLeft - effW;
-          const effBottom = this.surfaceHeight - effTop - effH;
+          const effRight = Math.max(0, this.surfaceWidth - box.left - effW);
+          const effBottom = Math.max(0, this.surfaceHeight - box.top - effH);
           const effRadius = Math.min(effW, effH) / 2;
-          this.activeClip.style.clipPath = `inset(${effTop}px ${effRight}px ${effBottom}px ${effLeft}px round ${effRadius}px)`;
+          this.activeClip.style.clipPath = `inset(${box.top}px ${effRight}px ${effBottom}px ${box.left}px round ${effRadius}px)`;
         }
       } else if (this.indicator && this.options.mode === "sheet") {
         const effW = this.springW.current * (1 + bulge * 0.04);

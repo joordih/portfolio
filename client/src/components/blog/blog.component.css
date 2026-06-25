@@ -3,7 +3,7 @@
   z-index: var(--z-base);
   max-width: var(--container);
   margin: 0 auto;
-  padding: clamp(110px, 12vw, 140px) clamp(20px, 4vw, 32px) clamp(72px, 8vw, 96px);
+  padding: var(--header-offset) clamp(20px, 4vw, 32px) clamp(72px, 8vw, 96px);
 }
 
 .eyebrow {

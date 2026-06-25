@@ -115,7 +115,7 @@ export default class PostsController {
     requireAdmin,
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
-        const id = Number(req.params.id);
+        const id = String(req.params.id);
         const existing = await getPostById(id);
         if (!existing) {
           res.status(404).json({ error: "Not found" });
@@ -156,7 +156,7 @@ export default class PostsController {
     requireAdmin,
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
-        const id = Number(req.params.id);
+        const id = String(req.params.id);
         if (!(await deletePost(id))) {
           res.status(404).json({ error: "Not found" });
           return;

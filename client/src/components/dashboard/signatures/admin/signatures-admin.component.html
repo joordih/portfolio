@@ -1,11 +1,19 @@
-<table class="table" data-table>
-  <thead>
-    <tr>
-      <th class="th">Author</th>
-      <th class="th">Message</th>
-      <th class="th">Time</th>
-      <th class="th"></th>
-    </tr>
-  </thead>
-  <tbody data-body></tbody>
-</table>
+<div class="admin-table-wrap" data-table-wrap>
+  <table class="admin-table" data-table>
+    <thead>
+      <tr>
+        <th class="th">Author</th>
+        <th class="th">Message</th>
+        <th class="th">Time</th>
+        <th class="th" aria-label="Actions"></th>
+      </tr>
+    </thead>
+    <tbody data-body></tbody>
+  </table>
+</div>
+<div class="admin-empty" data-empty hidden>
+  <div>
+    <p class="admin-empty__title">No signatures yet</p>
+    <p class="admin-empty__text">When someone signs the guestbook, their message shows up here.</p>
+  </div>
+</div>

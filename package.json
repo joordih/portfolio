@@ -11,6 +11,7 @@
     "node": "20.x"
   },
   "scripts": {
+    "dev:db": "docker compose up -d mongo",
     "dev:api": "npm run dev --prefix server",
     "dev:client": "npm run dev --prefix client",
     "build": "npm run build --prefix server && node scripts/copy-api-lib.mjs && npm run build --prefix client",
@@ -19,7 +20,7 @@
     "install:all": "npm install && npm install --prefix server && npm install --prefix client"
   },
   "dependencies": {
-    "@libsql/client": "^0.14.0",
+    "mongodb": "^6.15.0",
     "cookie-session": "^2.1.0",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",

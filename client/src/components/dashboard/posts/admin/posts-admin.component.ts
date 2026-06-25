@@ -79,7 +79,7 @@ class PostsAdminComponent extends HTMLElement {
       button.addEventListener(
         "click",
         () => {
-          this.openEditor(Number((button as HTMLElement).dataset.edit));
+          this.openEditor((button as HTMLElement).dataset.edit);
         },
         { signal }
       );
@@ -119,7 +119,7 @@ class PostsAdminComponent extends HTMLElement {
     this.listAbort = undefined;
   }
 
-  private openEditor(postId?: number): void {
+  private openEditor(postId?: string): void {
     const slot = this.shadow.querySelector("[data-editor-slot]");
     if (!slot) return;
 

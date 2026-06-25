@@ -1,6 +1,6 @@
 # Portfolio
 
-Personal portfolio site with a static frontend, Express API, admin dashboard, blog, guestbook, and GitHub OAuth. Deploys as a single Vercel project: the Vite build serves the SPA and API routes run as one serverless function.
+Personal portfolio site with a static frontend, Express API, admin dashboard, blog, guestbook, GitHub integration, and GitHub OAuth. Deploys as a single Vercel project: the Vite build serves the SPA and API routes run as one serverless function.
 
 Demo: [joordih.vercel.app](https://joordih.vercel.app)
 
@@ -12,6 +12,7 @@ Demo: [joordih.vercel.app](https://joordih.vercel.app)
 | Stack | Tools and technologies |
 | Blog | Posts with slug URLs; Tiptap editor in the dashboard |
 | Guestbook | GitHub-authenticated wall signatures |
+| Activity | GitHub contribution heatmap, lifetime stats, top public repositories |
 | Dashboard | Admin for signatures, posts, and projects (`ADMIN_LOGIN`) |
 
 ## Stack
@@ -21,7 +22,7 @@ Demo: [joordih.vercel.app](https://joordih.vercel.app)
 | Frontend | Vite, TypeScript, native Web Components |
 | Editor | Tiptap 3 (StarterKit + Link) |
 | API | Express 5, TypeScript |
-| Database | libSQL (SQLite locally, [Turso](https://turso.tech) on Vercel) |
+| Database | MongoDB (Docker locally, [MongoDB Atlas](https://www.mongodb.com/atlas) on Vercel) |
 | Auth | GitHub OAuth, cookie sessions |
 | Hosting | Vercel (SPA + serverless API) |
 
@@ -32,6 +33,7 @@ portfolio/
 ├── api/index.ts          # Vercel serverless entry (imports compiled server)
 ├── client/               # Vite SPA (Web Components)
 ├── server/               # Express API source
+├── docker-compose.yml    # Local MongoDB
 ├── scripts/
 │   └── copy-api-lib.mjs  # Copies server/dist → api/_lib at build time
 ├── vercel.json
@@ -40,7 +42,7 @@ portfolio/
 
 ## Local development
 
-Node.js 20+ and npm.
+Node.js 20+, npm, and Docker (for MongoDB).
 
 ```bash
 git clone https://github.com/joordih/portfolio.git
@@ -64,23 +66,24 @@ cp server/.env.example server/.env
 | `ADMIN_LOGIN` | yes | GitHub username allowed to use the dashboard |
 | `CLIENT_ORIGIN` | no | Default `http://localhost:5173` |
 | `GITHUB_CALLBACK_URL` | no | Default `{CLIENT_ORIGIN}/auth/github/callback` |
-| `LIBSQL_URL` | no | Omit to use `server/data.db` (SQLite file) |
+| `GITHUB_USERNAME` | no | GitHub login for `/activity` stats (defaults to `ADMIN_LOGIN`) |
+| `GITHUB_STATS_TOKEN` | no | Optional PAT for activity stats |
+| `MONGO_URL` | no | Default `mongodb://localhost:27017/portfolio` |
 
-Create a [GitHub OAuth App](https://github.com/settings/developers):
+Create a [GitHub OAuth App](https://github.com/settings/developers) with scopes `read:user` and `repo`:
 
 - Homepage URL: `http://localhost:5173`
 - Callback URL: `http://localhost:5173/auth/github/callback`
 
 ### 2. Run
 
-Two terminals:
-
 ```bash
+npm run dev:db       # MongoDB on :27017
 npm run dev:api      # API on :8080
 npm run dev:client   # Vite on :5173 (proxies /api and /auth)
 ```
 
-On first API start, the local database is created and seeded if empty.
+On first API start, collections are created and seeded if empty.
 
 ## Deploy to Vercel
 
@@ -93,8 +96,9 @@ On first API start, the local database is created and seeded if empty.
 | `GITHUB_CLIENT_ID` | yes | From your GitHub OAuth app |
 | `GITHUB_CLIENT_SECRET` | yes | From your GitHub OAuth app |
 | `ADMIN_LOGIN` | yes | Your GitHub username |
-| `LIBSQL_URL` | yes | Turso database URL |
-| `LIBSQL_AUTH_TOKEN` | yes | Turso auth token |
+| `MONGO_URL` | yes | MongoDB Atlas connection string |
+| `GITHUB_USERNAME` | no | For `/activity` stats |
+| `GITHUB_STATS_TOKEN` | no | Optional PAT for activity in production |
 | `CLIENT_ORIGIN` | no | Auto-detected from `VERCEL_URL` if unset |
 | `GITHUB_CALLBACK_URL` | no | Auto-detected if unset |
 
@@ -103,19 +107,15 @@ On first API start, the local database is created and seeded if empty.
 - Homepage URL: `https://your-domain.vercel.app`
 - Callback URL: `https://your-domain.vercel.app/auth/github/callback`
 
-### Database (Turso)
+### Database (MongoDB Atlas)
 
-Vercel serverless functions cannot persist a local SQLite file. Use [Turso](https://turso.tech) (free tier):
+Vercel serverless functions cannot persist a local database file. Use [MongoDB Atlas](https://www.mongodb.com/atlas) (free tier):
 
-```bash
-turso db create portfolio
-turso db show portfolio --url
-turso db tokens create portfolio
-```
+1. Create a free cluster
+2. Add a database user and allow network access (`0.0.0.0/0` or Vercel IPs)
+3. Copy the connection string into `MONGO_URL`
 
-Add `LIBSQL_URL` and `LIBSQL_AUTH_TOKEN` to Vercel. Tables are created and seeded automatically on first request when the database is empty.
-
-To import an existing local `server/data.db`, enable WAL mode first (`PRAGMA journal_mode=WAL`), then use Turso's SQLite upload in the dashboard.
+Collections and indexes are created automatically on first request when the database is empty.
 
 ## Customization
 
@@ -127,12 +127,13 @@ Fork the repo and adjust:
 | Header and footer | `client/src/components/chrome/` |
 | Admin user | `ADMIN_LOGIN` env var (your GitHub username) |
 | Theme | CSS variables in `client/src/assets/root.css` |
-| Seed data | `server/src/db.ts` (`seedIfEmpty`); production data lives in Turso |
+| Seed data | `server/src/db.ts` (`seedIfEmpty`); production data lives in Atlas |
 
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
+| `npm run dev:db` | Start MongoDB via Docker Compose |
 | `npm run dev:api` | API watch mode (port 8080) |
 | `npm run dev:client` | Vite dev server (port 5173) |
 | `npm run build` | Build server + copy to `api/_lib` + build client |

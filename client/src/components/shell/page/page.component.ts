@@ -11,6 +11,7 @@ const pageImports: Record<string, () => Promise<unknown>> = {
   guestbook: () => import("@/components/guestbook/guestbook.component"),
   blog: () => import("@/components/blog/blog.component"),
   dashboard: () => import("@/components/dashboard/dashboard.component"),
+  activity: () => import("@/components/activity/activity.component"),
   "404": () => import("@/components/not-found/not-found.component"),
 };
 
@@ -20,6 +21,7 @@ const pageTags: Record<string, string> = {
   guestbook: "guestbook-component",
   blog: "blog-component",
   dashboard: "dashboard-component",
+  activity: "activity-component",
   "404": "not-found-component",
 };
 
@@ -29,6 +31,7 @@ class PageComponent extends HTMLElement {
   private basePath = "/";
   private controller?: AbortController;
   private sectionScrollTarget: string | null = null;
+  private activeViewTransition: Promise<void> | null = null;
   private readonly onPopState: () => void;
   private readonly onLinkClick: (event: MouseEvent) => void;
 
@@ -213,25 +216,37 @@ class PageComponent extends HTMLElement {
     await this.scrollToSection(id);
   }
 
-  private swapView(element: HTMLElement): Promise<void> {
-    return new Promise((resolve) => {
-      const update = () => {
-        this.view.replaceChildren(element);
+  private async swapView(element: HTMLElement): Promise<void> {
+    if (this.activeViewTransition) {
+      await this.activeViewTransition.catch(() => undefined);
+    }
 
-        if (!location.hash && !this.sectionScrollTarget) {
-          document.documentElement.scrollTop = 0;
-        }
+    const update = () => {
+      this.view.replaceChildren(element);
 
-        requestAnimationFrame(() => resolve());
-      };
-
-      const doc = document as { startViewTransition?: (callback: () => void) => void };
-      if (doc.startViewTransition) {
-        doc.startViewTransition(update);
-      } else {
-        update();
+      if (!location.hash && !this.sectionScrollTarget) {
+        document.documentElement.scrollTop = 0;
       }
-    });
+    };
+
+    const doc = document as Document & {
+      startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+    };
+
+    if (!doc.startViewTransition) {
+      update();
+      return;
+    }
+
+    try {
+      const transition = doc.startViewTransition(update);
+      this.activeViewTransition = transition.finished.catch(() => undefined);
+      await this.activeViewTransition;
+    } catch {
+      update();
+    } finally {
+      this.activeViewTransition = null;
+    }
   }
 
   private async scrollToSection(id: string): Promise<void> {

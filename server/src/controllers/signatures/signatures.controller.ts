@@ -54,7 +54,7 @@ export default class SignaturesController {
     requireAuth,
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       try {
-        const id = Number(req.params.id);
+        const id = String(req.params.id);
         const sig = await getSignature(id);
         if (!sig) {
           res.status(404).json({ error: "Not found" });

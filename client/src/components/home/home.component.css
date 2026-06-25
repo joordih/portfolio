@@ -374,11 +374,24 @@
   text-wrap: pretty;
 }
 
-.project-card__tags {
+.project-card__tags,
+.project-card__stack {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.project-card__tags {
   margin-top: auto;
+}
+
+.project-card__stack {
+  margin-top: 10px;
+}
+
+.tag--stack {
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+  color: color-mix(in srgb, var(--accent) 70%, var(--text));
 }
 
 .tag {
@@ -477,6 +490,11 @@
 }
 
 @media (max-width: 640px) {
+  .section--hero {
+    min-height: auto;
+    padding-top: var(--header-offset);
+  }
+
   .hero__actions {
     flex-direction: column;
     align-items: stretch;
@@ -485,5 +503,19 @@
   .btn-primary,
   .btn-ghost {
     justify-content: center;
+  }
+
+  .project-card--feature {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .about__card {
+    padding: 18px 16px;
+  }
+
+  .contact-card {
+    padding: 18px 16px;
   }
 }

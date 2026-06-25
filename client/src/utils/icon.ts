@@ -10,6 +10,7 @@ import bookOpen from "@iconify-icons/ph/book-open-duotone";
 import sun from "@iconify-icons/ph/sun-duotone";
 import moon from "@iconify-icons/ph/moon-duotone";
 import caretDown from "@iconify-icons/ph/caret-down-duotone";
+import chartLineUp from "@iconify-icons/ph/chart-line-up-duotone";
 
 const icons = {
   "arrow-up-right": arrowUpRight,
@@ -22,6 +23,7 @@ const icons = {
   sun,
   moon,
   "caret-down": caretDown,
+  "chart-line-up": chartLineUp,
 } as const satisfies Record<string, IconifyIcon>;
 
 export type IconName = keyof typeof icons;
