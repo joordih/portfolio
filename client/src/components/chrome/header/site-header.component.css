@@ -148,18 +148,19 @@ site-header-component button {
   position: absolute;
   inset: 0;
   z-index: 4;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 5px;
   pointer-events: none;
   clip-path: inset(100% 100% 100% 100%);
 }
 
 .gnav-nav__mirror {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 9px 16px;
+  border: none;
   border-radius: var(--radius-pill);
   font-size: 14px;
+  line-height: 1;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -175,17 +176,23 @@ site-header-component button {
 }
 
 .gnav-nav__mirror--dashboard.gnav-nav__mirror--visible {
-  display: block;
+  display: inline-flex;
+  align-items: center;
 }
 
 .gnav-nav__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 9px 16px;
+  border: none;
   border-radius: var(--radius-pill);
   font-size: 14px;
+  line-height: 1;
   font-weight: 500;
   color: var(--muted);
   background: transparent;
-  transition-property: background, color;
+  transition-property: background, color, border-color;
   transition-duration: 0.25s;
   transition-timing-function: var(--ease-out);
 }
@@ -204,10 +211,12 @@ site-header-component button {
   color: var(--accent);
   background: var(--accent-soft);
   border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  box-sizing: border-box;
 }
 
 .gnav-nav__link--dashboard.gnav-nav__link--visible {
-  display: block;
+  display: inline-flex;
+  align-items: center;
 }
 
 .gnav-nav__link--dashboard.gnav-nav__link--active {
@@ -242,23 +251,17 @@ site-header-component button {
   background: var(--panel2);
 }
 
-site-header-component[data-glass-state]:not([data-glass-state="off"]):not([data-glass-state="narrow-viewport"])
-  .gnav-pill
-  .gnav-nav__link--active,
-site-header-component[data-glass-state]:not([data-glass-state="off"]):not([data-glass-state="narrow-viewport"])
-  .gnav-pill
-  .gnav-more.gnav-nav__link--active,
 .gnav-pill--glass .gnav-nav__link--active,
 .gnav-pill--glass .gnav-more.gnav-nav__link--active {
-  color: var(--muted);
+  color: transparent;
   background: transparent;
   box-shadow: none;
 }
 
 .gnav-pill--glass .gnav-nav__link--dashboard.gnav-nav__link--active {
-  color: var(--accent);
+  color: transparent;
   background: transparent;
-  border-color: transparent;
+  border: 1px solid transparent;
 }
 
 .gnav-caret {

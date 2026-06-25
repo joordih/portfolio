@@ -11,6 +11,7 @@ const pageImports: Record<string, () => Promise<unknown>> = {
   guestbook: () => import("@/components/guestbook/guestbook.component"),
   blog: () => import("@/components/blog/blog.component"),
   dashboard: () => import("@/components/dashboard/dashboard.component"),
+  activity: () => import("@/components/activity/activity.component"),
   "404": () => import("@/components/not-found/not-found.component"),
 };
 
@@ -20,6 +21,7 @@ const pageTags: Record<string, string> = {
   guestbook: "guestbook-component",
   blog: "blog-component",
   dashboard: "dashboard-component",
+  activity: "activity-component",
   "404": "not-found-component",
 };
 

@@ -6,6 +6,16 @@ export type Project = {
   description: string;
   url: string;
   tags: string[];
+  githubRepoId: number | null;
+  githubFullName: string | null;
+  isPublished: boolean;
+  isPrivate: boolean;
+  descriptionSource: "github" | "custom" | string;
+  githubDescription: string | null;
+  githubLanguages: string[];
+  selectedLanguages: string[];
+  techStack: string[];
+  source: "manual" | "github" | string;
   createdAt: number;
   updatedAt: number;
 };
@@ -29,6 +39,8 @@ export async function createProject(data: {
   numLabel?: string;
   sortOrder?: number;
   tags: string[] | string;
+  techStack?: string[] | string;
+  isPublished?: boolean;
 }): Promise<Project> {
   const res = await fetch("/api/projects", {
     method: "POST",
@@ -49,6 +61,11 @@ export async function updateProject(
     numLabel: string;
     sortOrder: number;
     tags: string[] | string;
+    isPublished: boolean;
+    descriptionSource: string;
+    githubDescription: string;
+    selectedLanguages: string[] | string;
+    techStack: string[] | string;
   }>
 ): Promise<Project> {
   const res = await fetch(`/api/projects/${id}`, {

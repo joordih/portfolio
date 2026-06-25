@@ -374,11 +374,24 @@
   text-wrap: pretty;
 }
 
-.project-card__tags {
+.project-card__tags,
+.project-card__stack {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.project-card__tags {
   margin-top: auto;
+}
+
+.project-card__stack {
+  margin-top: 10px;
+}
+
+.tag--stack {
+  border-color: color-mix(in srgb, var(--accent) 25%, var(--border));
+  color: color-mix(in srgb, var(--accent) 70%, var(--text));
 }
 
 .tag {

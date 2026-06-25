@@ -1,4 +1,4 @@
-FROM swift:6.0-jammy AS build
+FROM swift:6.2-jammy AS build
 
 WORKDIR /build
 
@@ -6,7 +6,7 @@ COPY ./Package.* ./
 RUN swift package resolve $([ -f ./Package.resolved ] && echo "--force-resolved-versions" || true)
 
 COPY . .
-RUN swift build -c release --static-swift-stdlib
+RUN swift build -c release --static-swift-stdlib --product App
 
 WORKDIR /staging
 

@@ -1,5 +1,11 @@
 import Vapor
 
+struct AuthExchangeResult {
+    let user: SessionUser
+    let accessToken: String
+    let scopes: String?
+}
+
 struct AuthService {
     let client: Client
 
@@ -15,7 +21,7 @@ struct AuthService {
         return next
     }
 
-    func exchangeCodeForUser(code: String, clientId: String, clientSecret: String) async throws -> SessionUser {
+    func exchangeCodeForUser(code: String, clientId: String, clientSecret: String) async throws -> AuthExchangeResult {
         let tokenResponse = try await client.post("https://github.com/login/oauth/access_token") { request in
             request.headers.contentType = .json
             request.headers.replaceOrAdd(name: .accept, value: "application/json")
@@ -37,11 +43,16 @@ struct AuthService {
         }
 
         let user = try userResponse.content.decode(GitHubUser.self)
-        return SessionUser(id: user.id, login: user.login, avatarUrl: user.avatar_url)
+        return AuthExchangeResult(
+            user: SessionUser(id: user.id, login: user.login, avatarUrl: user.avatar_url),
+            accessToken: accessToken,
+            scopes: token.scope
+        )
     }
 
     private struct TokenResponse: Content {
         let access_token: String?
+        let scope: String?
     }
 
     private struct GitHubUser: Content {

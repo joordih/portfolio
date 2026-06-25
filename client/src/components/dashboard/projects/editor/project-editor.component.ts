@@ -6,6 +6,7 @@ import { getProject, createProject, updateProject } from "@/data/projects";
 
 class ProjectEditorComponent extends HTMLElement {
   private shadow: ShadowRoot;
+  private isGithub = false;
 
   constructor() {
     super();
@@ -56,8 +57,10 @@ class ProjectEditorComponent extends HTMLElement {
     const project = await getProject(id);
     if (!project) return;
 
+    this.isGithub = project.source === "github";
+
     if (titleEl) {
-      titleEl.textContent = "Edit project";
+      titleEl.textContent = this.isGithub ? "Edit GitHub project" : "Edit project";
     }
 
     (this.shadow.querySelector("[data-num]") as HTMLInputElement).value = project.numLabel;
@@ -66,6 +69,16 @@ class ProjectEditorComponent extends HTMLElement {
     (this.shadow.querySelector("[data-url]") as HTMLInputElement).value = project.url;
     (this.shadow.querySelector("[data-description]") as HTMLTextAreaElement).value = project.description;
     (this.shadow.querySelector("[data-tags]") as HTMLInputElement).value = project.tags.join(", ");
+    (this.shadow.querySelector("[data-tech-stack]") as HTMLInputElement).value = project.techStack.join(", ");
+    (this.shadow.querySelector("[data-published]") as HTMLInputElement).checked = project.isPublished;
+    (this.shadow.querySelector("[data-languages]") as HTMLInputElement).value =
+      project.selectedLanguages.join(", ");
+
+    if (this.isGithub) {
+      (this.shadow.querySelector("[data-title]") as HTMLInputElement).readOnly = true;
+      (this.shadow.querySelector("[data-url]") as HTMLInputElement).readOnly = true;
+      this.shadow.querySelector("[data-github-note]")?.removeAttribute("hidden");
+    }
   }
 
   private async save(): Promise<void> {
@@ -75,6 +88,9 @@ class ProjectEditorComponent extends HTMLElement {
     const numLabel = (this.shadow.querySelector("[data-num]") as HTMLInputElement).value.trim();
     const sortOrder = Number((this.shadow.querySelector("[data-order]") as HTMLInputElement).value);
     const tags = (this.shadow.querySelector("[data-tags]") as HTMLInputElement).value;
+    const techStack = (this.shadow.querySelector("[data-tech-stack]") as HTMLInputElement).value;
+    const selectedLanguages = (this.shadow.querySelector("[data-languages]") as HTMLInputElement).value;
+    const isPublished = (this.shadow.querySelector("[data-published]") as HTMLInputElement).checked;
 
     if (!title || !url || !description) return;
 
@@ -85,6 +101,10 @@ class ProjectEditorComponent extends HTMLElement {
       numLabel: numLabel || undefined,
       sortOrder: Number.isFinite(sortOrder) ? sortOrder : undefined,
       tags,
+      techStack,
+      selectedLanguages,
+      isPublished,
+      descriptionSource: "custom",
     };
 
     const id = this.getAttribute("project-id");

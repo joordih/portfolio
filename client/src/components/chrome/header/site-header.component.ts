@@ -7,7 +7,7 @@ import {
   shouldMountGnavGlass,
 } from "@/utils/glass-support";
 
-const MORE_ROUTES = new Set(["/stack", "/blog", "/guestbook"]);
+const MORE_ROUTES = new Set(["/stack", "/blog", "/guestbook", "/activity"]);
 
 class SiteHeaderComponent extends HTMLElement {
   private moreOpen = false;
@@ -281,7 +281,9 @@ class SiteHeaderComponent extends HTMLElement {
       }
     });
 
-    this.pillGlass?.syncActive();
+    requestAnimationFrame(() => {
+      this.pillGlass?.syncActive();
+    });
   }
 
   private toggleTheme(): void {

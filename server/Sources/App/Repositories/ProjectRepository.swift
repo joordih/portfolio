@@ -4,7 +4,9 @@ import Vapor
 
 protocol ProjectRepository {
     func all() async throws -> [Project]
+    func allPublished() async throws -> [Project]
     func find(id: ObjectId) async throws -> Project?
+    func findByGitHubRepoId(_ repoId: Int) async throws -> Project?
     func count() async throws -> Int
     func create(_ project: Project) async throws
     func update(_ project: Project) async throws
@@ -21,8 +23,19 @@ struct FluentProjectRepository: ProjectRepository {
             .all()
     }
 
+    func allPublished() async throws -> [Project] {
+        let projects = try await all()
+        return projects.filter(\.resolvedIsPublished)
+    }
+
     func find(id: ObjectId) async throws -> Project? {
         try await Project.find(id, on: database)
+    }
+
+    func findByGitHubRepoId(_ repoId: Int) async throws -> Project? {
+        try await Project.query(on: database)
+            .filter(\.$githubRepoId == repoId)
+            .first()
     }
 
     func count() async throws -> Int {

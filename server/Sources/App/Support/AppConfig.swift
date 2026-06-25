@@ -39,6 +39,11 @@ enum AppConfig {
         return login == adminLogin()
     }
 
+    static func githubUsername() -> String {
+        let configured = Environment.get("GITHUB_USERNAME")?.trimmingCharacters(in: .whitespaces) ?? ""
+        return configured.isEmpty ? adminLogin() : configured
+    }
+
     private static func trimTrailingSlash(_ value: String) -> String {
         value.hasSuffix("/") ? String(value.dropLast()) : value
     }

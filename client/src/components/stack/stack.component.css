@@ -86,11 +86,6 @@
   position: absolute;
   inset: 0;
   z-index: 4;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px;
-  padding: 5px;
   pointer-events: none;
   clip-path: inset(100% 100% 100% 100%);
 }

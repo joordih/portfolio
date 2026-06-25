@@ -5,8 +5,11 @@ import Vapor
 struct ProjectService {
     let repository: ProjectRepository
 
-    func list() async throws -> [Project] {
-        try await repository.all()
+    func list(publishedOnly: Bool) async throws -> [Project] {
+        if publishedOnly {
+            return try await repository.allPublished()
+        }
+        return try await repository.all()
     }
 
     func get(idString: String) async throws -> Project {
@@ -27,6 +30,7 @@ struct ProjectService {
             throw ServiceError.badRequest("Title, description and url are required")
         }
         let tags = body.tags?.parsed() ?? []
+        let techStack = body.techStack?.parsed() ?? []
         let existingCount = try await repository.count()
         let order = body.sortOrder ?? (existingCount + 1)
         let label = (body.numLabel ?? String(format: "%02d", order)).trimmingCharacters(in: .whitespaces)
@@ -38,6 +42,10 @@ struct ProjectService {
             description: description,
             url: url,
             tags: tags,
+            isPublished: body.isPublished ?? true,
+            descriptionSource: "custom",
+            techStack: techStack,
+            source: "manual",
             createdAt: now,
             updatedAt: now
         )
@@ -69,6 +77,21 @@ struct ProjectService {
         }
         if let tags = body.tags {
             project.tags = tags.parsed()
+        }
+        if let isPublished = body.isPublished {
+            project.isPublished = isPublished
+        }
+        if let descriptionSource = body.descriptionSource {
+            project.descriptionSource = descriptionSource
+        }
+        if let githubDescription = body.githubDescription {
+            project.githubDescription = githubDescription
+        }
+        if let selectedLanguages = body.selectedLanguages {
+            project.selectedLanguages = selectedLanguages.parsed()
+        }
+        if let techStack = body.techStack {
+            project.techStack = techStack.parsed()
         }
         project.updatedAt = nowMillis()
         try await repository.update(project)

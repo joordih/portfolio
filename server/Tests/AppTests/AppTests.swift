@@ -28,4 +28,34 @@ final class AppTests: XCTestCase {
     func testAdminLoginDefault() {
         XCTAssertFalse(AppConfig.isAdminLogin(nil))
     }
+
+    func testGitHubStatsPeakDay() {
+        let days = [
+            GitHubStatsCalculator.Day(date: "2025-01-01", count: 2),
+            GitHubStatsCalculator.Day(date: "2025-01-02", count: 8),
+            GitHubStatsCalculator.Day(date: "2025-01-03", count: 3)
+        ]
+        let peak = GitHubStatsCalculator.peakDay(from: days)
+        XCTAssertEqual(peak.count, 8)
+        XCTAssertEqual(peak.date, "2025-01-02")
+    }
+
+    func testGitHubStatsLongestStreak() {
+        let days = [
+            GitHubStatsCalculator.Day(date: "2025-01-01", count: 1),
+            GitHubStatsCalculator.Day(date: "2025-01-02", count: 2),
+            GitHubStatsCalculator.Day(date: "2025-01-03", count: 1),
+            GitHubStatsCalculator.Day(date: "2025-01-05", count: 4),
+            GitHubStatsCalculator.Day(date: "2025-01-06", count: 2)
+        ]
+        XCTAssertEqual(GitHubStatsCalculator.longestStreak(from: days), 3)
+    }
+
+    func testGitHubStatsLifetimeCommits() {
+        let days = [
+            GitHubStatsCalculator.Day(date: "2025-01-01", count: 2),
+            GitHubStatsCalculator.Day(date: "2025-01-02", count: 3)
+        ]
+        XCTAssertEqual(GitHubStatsCalculator.lifetimeCommits(from: days), 5)
+    }
 }

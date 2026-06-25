@@ -132,8 +132,15 @@ class HomeComponent extends HTMLElement {
         <h3 class="project-card__title">${escapeHtml(project.title)}</h3>
         <p class="project-card__desc">${escapeHtml(project.description)}</p>
         <div class="project-card__tags">
-          ${project.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
+          ${(project.selectedLanguages.length ? project.selectedLanguages : project.tags)
+            .map((tag) => `<span class="tag tag--lang">${escapeHtml(tag)}</span>`)
+            .join("")}
         </div>
+        ${
+          project.techStack.length
+            ? `<div class="project-card__stack">${project.techStack.map((item) => `<span class="tag tag--stack">${escapeHtml(item)}</span>`).join("")}</div>`
+            : ""
+        }
       </a>`
       )
       .join("");

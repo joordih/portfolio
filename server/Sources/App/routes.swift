@@ -7,5 +7,6 @@ func routes(_ app: Application) throws {
     try api.grouped("posts").register(collection: PostController())
     try api.grouped("projects").register(collection: ProjectController())
     try api.grouped("me").register(collection: MeController())
+    try api.grouped("github").register(collection: GitHubController())
     try app.grouped("auth").register(collection: AuthController())
 }

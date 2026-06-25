@@ -10,6 +10,7 @@ Personal portfolio site with a static frontend, a Swift (Vapor) API, admin dashb
 | Stack | Tools and technologies |
 | Blog | Posts with slug URLs; Tiptap editor in the dashboard |
 | Guestbook | GitHub-authenticated wall signatures |
+| Activity | GitHub contribution heatmap, lifetime stats, top public repositories |
 | Dashboard | Admin for signatures, posts, and projects (`ADMIN_LOGIN`) |
 
 ## Stack
@@ -73,9 +74,11 @@ Copy `server/.env.example` to `server/.env` and fill in the GitHub OAuth values.
 | `ADMIN_LOGIN` | yes | GitHub username allowed to use the dashboard |
 | `CLIENT_ORIGIN` | no | Default `http://localhost:5173` |
 | `GITHUB_CALLBACK_URL` | no | Default `{CLIENT_ORIGIN}/auth/github/callback` |
+| `GITHUB_USERNAME` | no | GitHub login used for `/activity` stats (defaults to `ADMIN_LOGIN`) |
+| `GITHUB_STATS_TOKEN` | no | Optional PAT for activity stats in production |
 | `MONGO_URL` | no | Default `mongodb://localhost:27017/portfolio` (compose sets `mongodb://mongo:27017/portfolio`) |
 
-Create a [GitHub OAuth App](https://github.com/settings/developers):
+Create a [GitHub OAuth App](https://github.com/settings/developers) with scopes `read:user` and `repo` (admin token storage for repository import and activity):
 
 - Homepage URL: `http://localhost:5173`
 - Callback URL: `http://localhost:5173/auth/github/callback`
@@ -106,6 +109,8 @@ The Vapor app runs as a long-lived container. Build the image from `server/Docke
 | `MONGO_URL` | yes | e.g. a [MongoDB Atlas](https://www.mongodb.com/atlas) `mongodb+srv://...` connection string |
 | `CLIENT_ORIGIN` | yes | Public origin of the SPA |
 | `GITHUB_CALLBACK_URL` | no | Defaults to `{CLIENT_ORIGIN}/auth/github/callback` |
+| `GITHUB_USERNAME` | no | Public GitHub login for activity page |
+| `GITHUB_STATS_TOKEN` | no | Optional PAT if admin OAuth token is unavailable |
 | `NODE_ENV` | no | Set to `production` behind HTTPS so session cookies are marked `Secure` |
 
 Update the GitHub OAuth app for production:

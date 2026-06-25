@@ -22,7 +22,7 @@ struct AuthController: RouteCollection {
         var components = URLComponents(string: "https://github.com/login/oauth/authorize")
         components?.queryItems = [
             URLQueryItem(name: "client_id", value: clientId),
-            URLQueryItem(name: "scope", value: "read:user"),
+            URLQueryItem(name: "scope", value: "read:user repo"),
             URLQueryItem(name: "redirect_uri", value: AppConfig.githubCallbackURL()),
             URLQueryItem(name: "state", value: state)
         ]
@@ -50,12 +50,23 @@ struct AuthController: RouteCollection {
 
         do {
             let service = AuthService(client: req.client)
-            let user = try await service.exchangeCodeForUser(
+            let result = try await service.exchangeCodeForUser(
                 code: code,
                 clientId: clientId,
                 clientSecret: clientSecret
             )
-            req.setSessionUser(user)
+            req.setSessionUser(result.user)
+
+            if AppConfig.isAdminLogin(result.user.login) {
+                try await GitHubTokenStore.saveToken(
+                    for: result.user.login,
+                    githubId: result.user.id,
+                    accessToken: result.accessToken,
+                    scopes: result.scopes,
+                    repository: req.githubConnectionRepository
+                )
+            }
+
             return afterAuthRedirect(req)
         } catch {
             return fallbackRedirect(req)

@@ -19,6 +19,7 @@ struct PortfolioController: RouteCollection {
             "/stack": "stack",
             "/guestbook": "guestbook",
             "/blog": "blog",
+            "/activity": "activity",
             "/dashboard": "dashboard"
         ]
         let response = Response(status: .ok)

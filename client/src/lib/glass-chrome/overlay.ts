@@ -164,6 +164,48 @@ export class GlassChromeOverlay {
     this.syncFocus();
   }
 
+  private getVisibleChildren(container: HTMLElement): HTMLElement[] {
+    return Array.from(container.children).filter((child): child is HTMLElement => {
+      if (!(child instanceof HTMLElement)) return false;
+      return getComputedStyle(child).display !== "none";
+    });
+  }
+
+  private syncMirrorAlignment(): void {
+    if (!this.activeClip || this.options.mode !== "segmented") return;
+
+    const navLayer = this.activeClip.previousElementSibling;
+    if (!(navLayer instanceof HTMLElement)) return;
+
+    const rootRect = this.root.getBoundingClientRect();
+    const segments = this.getVisibleChildren(navLayer);
+    const mirrors = this.getVisibleChildren(this.activeClip);
+    const count = Math.min(segments.length, mirrors.length);
+
+    for (let i = 0; i < count; i++) {
+      const segment = segments[i];
+      const mirror = mirrors[i];
+      const segRect = segment.getBoundingClientRect();
+
+      mirror.style.visibility = "visible";
+      mirror.style.position = "absolute";
+      mirror.style.left = `${segRect.left - rootRect.left}px`;
+      mirror.style.top = `${segRect.top - rootRect.top}px`;
+      mirror.style.width = `${segRect.width}px`;
+      mirror.style.height = `${segRect.height}px`;
+      mirror.style.margin = "0";
+      mirror.style.padding = "0";
+      mirror.style.display = "flex";
+      mirror.style.alignItems = "center";
+      mirror.style.justifyContent = "center";
+      mirror.style.boxSizing = "border-box";
+    }
+
+    for (let i = count; i < mirrors.length; i++) {
+      mirrors[i].style.visibility = "hidden";
+    }
+  }
+
   private syncFocus(): void {
     const { mode, activeSelector, hoverSelector, paddingX = 0 } = this.options;
 
@@ -191,6 +233,8 @@ export class GlassChromeOverlay {
         this.springH.current = h;
         this.initialized = true;
       }
+
+      this.syncMirrorAlignment();
       return;
     }
 

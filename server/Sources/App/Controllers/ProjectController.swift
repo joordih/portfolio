@@ -12,7 +12,8 @@ struct ProjectController: RouteCollection {
 
     func list(req: Request) async throws -> [ProjectDTO] {
         let service = ProjectService(repository: req.projectRepository)
-        return try await service.list().map(ProjectDTO.init)
+        let publishedOnly = !(req.sessionUser.map { AppConfig.isAdminLogin($0.login) } ?? false)
+        return try await service.list(publishedOnly: publishedOnly).map(ProjectDTO.init)
     }
 
     func getById(req: Request) async throws -> ProjectDTO {

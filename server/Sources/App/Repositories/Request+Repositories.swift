@@ -12,4 +12,12 @@ extension Request {
     var projectRepository: ProjectRepository {
         FluentProjectRepository(database: db)
     }
+
+    var githubConnectionRepository: GitHubConnectionRepository {
+        FluentGitHubConnectionRepository(database: db)
+    }
+
+    var githubStatsCacheRepository: GitHubStatsCacheRepository {
+        FluentGitHubStatsCacheRepository(database: db)
+    }
 }
